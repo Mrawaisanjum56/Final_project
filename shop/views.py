@@ -7,11 +7,14 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
 from .models import Product, Category, Order, OrderItem, Review
 from .forms import CustomUserCreationForm, ProductForm, CategoryForm, LoginForm, ReviewForm
+from .ml.quality import assess_wheat_quality
+
+ALLOWED_QUALITY_GRADES = {'A', 'B', 'C'}
 
 def send_order_email_async(subject, message, email_from, recipient_list):
     """Helper function to send email in a separate thread."""
@@ -275,9 +278,40 @@ def update_product(request, pk):
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
-            form.save()
-            messages.success(request, f'Product "{product.name}" updated successfully.')
-            return redirect('farmer_dashboard')
+            updated_product = form.save(commit=False)
+            try:
+                updated_product.apply_market_price(strict=True)
+            except ValidationError as exc:
+                form.add_error(None, str(exc))
+            else:
+                should_run_quality = (
+                    updated_product.is_wheat_commodity and
+                    updated_product.image and
+                    (
+                        'image' in form.changed_data or
+                        'category' in form.changed_data or
+                        not updated_product.quality_grade
+                    )
+                )
+                if should_run_quality:
+                    try:
+                        grade, confidence = assess_wheat_quality(updated_product.image)
+                    except ValueError:
+                        updated_product.quality_grade = None
+                        updated_product.quality_confidence = None
+                        messages.warning(request, 'Wheat quality assessment failed. Please upload a valid image and try again.')
+                    else:
+                        updated_product.quality_grade = grade
+                        updated_product.quality_confidence = confidence
+                        if grade in ALLOWED_QUALITY_GRADES:
+                            messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
+                elif not updated_product.is_wheat_commodity:
+                    updated_product.quality_grade = None
+                    updated_product.quality_confidence = None
+
+                updated_product.save(allow_quality_override=should_run_quality)
+                messages.success(request, f'Product "{updated_product.name}" updated with latest market price.')
+                return redirect('farmer_dashboard')
     else:
         form = ProductForm(instance=product)
     
@@ -316,8 +350,30 @@ def farmer_dashboard(request):
             if product_form.is_valid():
                 product = product_form.save(commit=False)
                 product.farmer = request.user
-                product.save()
-                return redirect('farmer_dashboard')
+                try:
+                    product.apply_market_price(strict=True)
+                except ValidationError as exc:
+                    product_form.add_error(None, str(exc))
+                else:
+                    if product.is_wheat_commodity and product.image:
+                        try:
+                            grade, confidence = assess_wheat_quality(product.image)
+                        except ValueError:
+                            product.quality_grade = None
+                            product.quality_confidence = None
+                            messages.warning(request, 'Wheat quality assessment failed. Please upload a valid image and try again.')
+                        else:
+                            product.quality_grade = grade
+                            product.quality_confidence = confidence
+                            if grade in ALLOWED_QUALITY_GRADES:
+                                messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
+                    else:
+                        product.quality_grade = None
+                        product.quality_confidence = None
+
+                    product.save()
+                    messages.success(request, f'Product "{product.name}" published with market-linked pricing.')
+                    return redirect('farmer_dashboard')
         
     context = {
         'products': products, 
