@@ -144,5 +144,6 @@ WHEAT_QUALITY_MODEL_PATH = BASE_DIR / "models" / "wheat_quality.keras"
 SHIPPING_COST = 5
 
 # AMIS scraping defaults
-AMIS_PRICE_URL = os.environ.get('AMIS_PRICE_URL', 'https://amis.pk/')
+AMIS_BASE_URL = os.environ.get("AMIS_BASE_URL", "http://www.amis.pk")
+AMIS_MARKET_FILTER = os.environ.get("AMIS_MARKET_FILTER", "RahimYarKhan")
 AMIS_SCRAPE_TIMEOUT = int(os.environ.get('AMIS_SCRAPE_TIMEOUT', 45))
