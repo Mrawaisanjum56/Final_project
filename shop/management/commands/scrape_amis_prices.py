@@ -14,6 +14,7 @@ from django.utils import timezone
 from shop.models import MarketPrice
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36"
+WHEAT_COMMODITY_NAME = "wheat"
 
 # Your known working commodity IDs
 COMMODITY_PAGES = {
@@ -144,7 +145,7 @@ class Command(BaseCommand):
                     break
 
             if picked_price is None:
-                if commodity_type.lower() == "wheat":
+                if commodity_type.lower() == WHEAT_COMMODITY_NAME:
                     fallback_qs = MarketPrice.objects.filter(
                         commodity_type__iexact=commodity_type,
                         price_date__lt=price_date,

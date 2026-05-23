@@ -76,7 +76,7 @@
 			margin-bottom: 4px;
 			width: 100%;
 		}
-		.register-card input[type="password"] {
+		.password-toggle-wrap input[type="password"] {
 			padding-right: 42px;
 		}
 		.password-toggle-wrap {
@@ -155,28 +155,6 @@
 		<p class="mt-2 mb-1">Already have an account? <a href="{% url 'login' %}{% if next %}?next={{ next }}{% endif %}" style="color: #F28123; font-weight: bold;">Login here</a></p>
 		<a href="{% url 'home' %}" style="color: #F28123; font-weight: 600; text-decoration: none; display: block; margin-top: 5px;">← Back to Home</a>
 	</div>
-	<script>
-		(function () {
-			const passwordFields = document.querySelectorAll('input[type="password"]');
-			passwordFields.forEach(function (input) {
-				const wrapper = document.createElement('div');
-				wrapper.className = 'password-toggle-wrap';
-				input.parentNode.insertBefore(wrapper, input);
-				wrapper.appendChild(input);
-
-				const button = document.createElement('button');
-				button.type = 'button';
-				button.className = 'password-toggle-btn';
-				button.innerHTML = '<i class="fas fa-eye"></i>';
-				button.setAttribute('aria-label', 'Show password');
-				button.addEventListener('click', function () {
-					const isHidden = input.type === 'password';
-					input.type = isHidden ? 'text' : 'password';
-					button.innerHTML = isHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
-				});
-				wrapper.appendChild(button);
-			});
-		})();
-	</script>
+	<script src="{% static 'shop/password_toggle.js' %}"></script>
 </body>
 </html>

@@ -21,7 +21,7 @@ class ProductAdmin(admin.ModelAdmin):
             'price_source',
             'created_at',
         )
-        # Keep price editable on add form to avoid required-field creation errors.
+        # Keep price editable on add form to avoid required field validation errors.
         if obj is None:
             return base_fields
         return ('price',) + base_fields
