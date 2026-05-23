@@ -1,15 +1,27 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Product, CustomUser, Order, OrderItem, Category
+from .models import Product, CustomUser, Order, OrderItem, Category, MarketPrice
 
 admin.site.register(Category)
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'stock', 'farmer', 'created_at')
-    list_filter = ('category', 'created_at')
-    search_fields = ('name',)
+    list_display = ('name', 'category', 'market_location', 'variety', 'price', 'quality_grade', 'stock', 'farmer', 'created_at')
+    list_filter = ('category', 'market_location', 'created_at')
+    search_fields = ('name', 'market_location', 'variety')
+    readonly_fields = ('priced_at', 'price_source')
+
+    def save_model(self, request, obj, form, change):
+        obj._allow_admin_override = request.user.is_staff
+        super().save_model(request, obj, form, change)
 
 admin.site.register(Product, ProductAdmin)
+
+
+@admin.register(MarketPrice)
+class MarketPriceAdmin(admin.ModelAdmin):
+    list_display = ('price_date', 'commodity_type', 'variety', 'market_location', 'region', 'unit', 'price', 'source', 'scraped_at')
+    list_filter = ('price_date', 'commodity_type', 'market_location', 'region', 'source')
+    search_fields = ('commodity_type', 'variety', 'market_location', 'region')
 
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (

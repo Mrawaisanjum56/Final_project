@@ -139,3 +139,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # E-commerce Business Logic
 SHIPPING_COST = 5
+
+# AMIS scraping defaults
+AMIS_PRICE_URL = os.environ.get('AMIS_PRICE_URL', 'https://amis.pk/')

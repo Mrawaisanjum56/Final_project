@@ -47,10 +47,11 @@ class CategoryForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'category', 'price', 'description', 'stock', 'image']
+        fields = ['name', 'category', 'variety', 'market_location', 'description', 'stock', 'image']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['market_location'].required = True
         for name, field in self.fields.items():
             if name != 'image':
                 field.widget.attrs.update({
