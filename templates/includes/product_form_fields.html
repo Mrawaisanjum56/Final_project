@@ -1,0 +1,136 @@
+{% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<div class="form-group">
+    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+    {{ form.name }}
+    {% for error in form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+</div>
+<div class="form-group">
+    <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+    {{ form.category }}
+    {% for error in form.category.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+</div>
+<div class="form-group">
+    <label for="{{ form.variety.id_for_label }}">{{ form.variety.label }}</label>
+    {{ form.variety }}
+    {% for error in form.variety.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+</div>
+<div class="form-group">
+    <label for="{{ form.market_location.id_for_label }}">{{ form.market_location.label }}</label>
+    {{ form.market_location }}
+    {% for error in form.market_location.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+</div>
+<div class="form-group">
+    <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+    {{ form.description }}
+    {% for error in form.description.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+</div>
+<div class="form-group">
+    <label for="{{ form.stock.id_for_label }}">{{ form.stock.label }}</label>
+    {{ form.stock }}
+    {% for error in form.stock.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+</div>
+<div class="form-group">
+    <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
+    <div class="d-flex align-items-center">
+        <div class="flex-grow-1">{{ form.image }}</div>
+        <button type="button" class="btn btn-outline-primary rounded-pill ml-2 js-run-model">Run Model</button>
+    </div>
+    {% for error in form.image.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    <small class="form-text text-muted">Run model to auto-fill quality and market price before submit.</small>
+</div>
+
+<div class="form-group">
+    <label>Quality Grade</label>
+    <input
+        type="text"
+        class="form-control rounded-pill border-0 shadow-sm px-4 bg-light js-quality-grade"
+        value="{% if product.quality_grade %}{{ product.quality_grade }}{% endif %}"
+        readonly
+    >
+</div>
+<div class="form-group">
+    <label>Quality Confidence (%)</label>
+    <input
+        type="text"
+        class="form-control rounded-pill border-0 shadow-sm px-4 bg-light js-quality-confidence"
+        value="{% if product.quality_confidence %}{{ product.quality_confidence }}{% endif %}"
+        readonly
+    >
+</div>
+<div class="form-group">
+    <label>Auto Price (Database)</label>
+    <input
+        type="text"
+        class="form-control rounded-pill border-0 shadow-sm px-4 bg-light js-auto-price"
+        value="{% if product.price %}{{ product.price }}{% endif %}"
+        readonly
+    >
+</div>
+<div class="text-danger small mb-2 js-model-error"></div>
+
+<script>
+    if (!window.productModelRunnerBound) {
+        window.productModelRunnerBound = true;
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
+
+        async function runModel(button) {
+            const form = button.closest('form');
+            const errorBox = form.querySelector('.js-model-error');
+            const qualityGrade = form.querySelector('.js-quality-grade');
+            const qualityConfidence = form.querySelector('.js-quality-confidence');
+            const autoPrice = form.querySelector('.js-auto-price');
+            const imageField = form.querySelector('input[name="image"]');
+            const categoryField = form.querySelector('select[name="category"]');
+            const varietyField = form.querySelector('input[name="variety"]');
+            const locationField = form.querySelector('input[name="market_location"]');
+
+            errorBox.textContent = '';
+            button.disabled = true;
+            button.textContent = 'Running...';
+
+            const payload = new FormData();
+            payload.append('category', categoryField ? categoryField.value : '');
+            payload.append('variety', varietyField ? varietyField.value : '');
+            payload.append('market_location', locationField ? locationField.value : '');
+            if (imageField && imageField.files && imageField.files[0]) {
+                payload.append('image', imageField.files[0]);
+            }
+
+            try {
+                const response = await fetch("{% url 'analyze_product_listing' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    body: payload,
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to run model.');
+                }
+                qualityGrade.value = data.quality_grade || '';
+                qualityConfidence.value = data.quality_confidence || '';
+                autoPrice.value = data.price || '';
+            } catch (error) {
+                errorBox.textContent = error.message;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Run Model';
+            }
+        }
+
+        document.addEventListener('click', function (event) {
+            const button = event.target.closest('.js-run-model');
+            if (!button) return;
+            runModel(button);
+        });
+    }
+</script>

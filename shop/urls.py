@@ -28,6 +28,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.farmer_dashboard, name='farmer_dashboard'),
+    path('dashboard/analyze-product/', views.analyze_product_listing, name='analyze_product_listing'),
     path('dashboard/delete/<int:pk>/', views.delete_product, name='delete_product'),
     path('dashboard/update/<int:pk>/', views.update_product, name='update_product'),
     path('dashboard/order/update/<int:order_id>/', views.seller_update_order_status, name='seller_update_order_status'),

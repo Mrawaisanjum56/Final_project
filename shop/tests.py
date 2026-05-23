@@ -1,9 +1,12 @@
 from decimal import Decimal
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
+from django.urls import reverse
 
 from .forms import ProductForm
 from .models import Category, CustomUser, MarketPrice, Product
@@ -112,3 +115,39 @@ class ProductMarketPricingTests(TestCase):
         self.assertEqual(product.price, Decimal('2750.00'))
         self.assertEqual(product.price_source_id, original_source_id)
         self.assertEqual(product.priced_at, original_priced_at)
+
+    @patch('shop.views.assess_wheat_quality', return_value=('A', 96.5))
+    def test_analyze_product_listing_returns_quality_and_price(self, _mock_quality):
+        self.client.login(username='seller1', password='pass12345')
+        image = SimpleUploadedFile('wheat.jpg', b'fake-image-content', content_type='image/jpeg')
+
+        response = self.client.post(
+            reverse('analyze_product_listing'),
+            {
+                'category': self.wheat.pk,
+                'variety': 'A1',
+                'market_location': 'Lahore',
+                'image': image,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['quality_grade'], 'A')
+        self.assertEqual(payload['quality_confidence'], 96.5)
+        self.assertEqual(payload['price'], '2750.00')
+
+    def test_analyze_product_listing_requires_image_for_wheat(self):
+        self.client.login(username='seller1', password='pass12345')
+
+        response = self.client.post(
+            reverse('analyze_product_listing'),
+            {
+                'category': self.wheat.pk,
+                'variety': 'A1',
+                'market_location': 'Lahore',
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Please choose an image', response.json()['error'])

@@ -2,6 +2,7 @@ import threading
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Sum, F
 from django.urls import reverse
+from django.http import JsonResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
@@ -316,6 +317,63 @@ def update_product(request, pk):
         form = ProductForm(instance=product)
     
     return render(request, 'update_product.html', {'form': form, 'product': product})
+
+@login_required
+def analyze_product_listing(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST requests are allowed.'}, status=405)
+    if not request.user.is_seller:
+        raise PermissionDenied
+
+    category_id = request.POST.get('category')
+    variety = (request.POST.get('variety') or '').strip()
+    market_location = (request.POST.get('market_location') or '').strip()
+    image = request.FILES.get('image')
+
+    if not category_id:
+        return JsonResponse({'error': 'Please select a category first.'}, status=400)
+    if not market_location:
+        return JsonResponse({'error': 'Please enter a market location first.'}, status=400)
+
+    category = Category.objects.filter(pk=category_id).first()
+    if category is None:
+        return JsonResponse({'error': 'Selected category is invalid.'}, status=400)
+
+    preview_product = Product(
+        farmer=request.user,
+        name='Preview Product',
+        category=category,
+        variety=variety,
+        market_location=market_location,
+        price=0,
+        description='Preview',
+        stock=1,
+    )
+
+    try:
+        preview_product.apply_market_price(strict=True)
+    except ValidationError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+
+    quality_grade = ''
+    quality_confidence = ''
+    if preview_product.is_wheat_commodity:
+        if not image:
+            return JsonResponse({'error': 'Please choose an image to run the quality model.'}, status=400)
+        try:
+            grade, confidence = assess_wheat_quality(image)
+        except ValueError as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
+        quality_grade = grade or ''
+        quality_confidence = confidence if confidence is not None else ''
+
+    return JsonResponse(
+        {
+            'quality_grade': quality_grade,
+            'quality_confidence': quality_confidence,
+            'price': f'{preview_product.price:.2f}',
+        }
+    )
 
 def farmer_dashboard(request):
     if not request.user.is_seller:
