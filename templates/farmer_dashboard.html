@@ -191,7 +191,7 @@
                 <div class="modal-body p-4 pt-0">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        {{ form.as_p }}
+                        {% include 'includes/product_form_fields.html' with form=form %}
                         <button type="submit" class="btn boxed-btn w-100 rounded-pill mt-3">Publish Product</button>
                     </form>
                 </div>

@@ -22,7 +22,7 @@
             <div class="card border-0 shadow-lg p-5" style="border-radius: 20px; background: rgba(255,255,255,0.9);">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    {% include 'includes/product_form_fields.html' with form=form product=product %}
                     <div class="mt-4">
                         <button type="submit" class="btn boxed-btn rounded-pill px-5">Save Changes</button>
                         <a href="{% url 'farmer_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-5 ml-2">Cancel</a>
