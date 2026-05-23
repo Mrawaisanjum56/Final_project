@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shop{% endblock %}
+
+{% block content %}
+	<!-- breadcrumb-section -->
+	<div class="breadcrumb-section breadcrumb-bg">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-8 offset-lg-2 text-center">
+					<div class="breadcrumb-text">
+						<p>Fresh and Organic</p>
+						<h1>Shop</h1>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- end breadcrumb section -->
+
+	<!-- products -->
+	<div class="product-section mt-150 mb-150">
+		<div class="container">
+
+			<div class="row">
+                <div class="col-md-12">
+                    <div class="product-filters">
+                        <ul>
+                            <li class="{% if not selected_category %}active{% endif %}"><a href="{% url 'shop' %}" style="color: inherit;">All</a></li>
+                            {% for slug, name in categories %}
+                                <li class="{% if selected_category == slug %}active{% endif %}">
+                                    <a href="{% url 'shop' %}?category={{ slug }}" style="color: inherit;">{{ name }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+			<div class="row product-lists">
+				{% for product in products %}
+				<div class="col-lg-4 col-md-6 text-center">
+					<div class="single-product-item">
+						<div class="product-image">
+							{% if product.image %}
+								<a href="{% url 'single-product' product.pk %}"><img src="{{ product.image.url }}" alt="{{ product.name }}" style="height: 250px; object-fit: cover;"></a>
+							{% else %}
+								<a href="{% url 'single-product' product.pk %}"><img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt=""></a>
+							{% endif %}
+						</div>
+						<h3>{{ product.name }}</h3>
+						<p class="product-price"><span>Stock: {{ product.stock }}</span> ${{ product.price }}</p>
+						<a href="{% url 'add_to_cart' product.id %}" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+
+			<div class="row">
+				<div class="col-lg-12 text-center">
+					<div class="pagination-wrap">
+						<ul>
+							<li><a href="#">Prev</a></li>
+							<li><a href="#">1</a></li>
+							<li><a class="active" href="#">2</a></li>
+							<li><a href="#">3</a></li>
+							<li><a href="#">Next</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- end products -->
+{% endblock %}

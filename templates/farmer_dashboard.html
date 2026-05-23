@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Seller Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-orange: #F28123;
+        --dark-navy: #051922;
+    }
+    .dashboard-stat-card {
+        transition: all 0.3s ease;
+        border-radius: 20px !important;
+        overflow: hidden;
+    }
+    .dashboard-stat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .inventory-table thead th {
+        background-color: var(--dark-navy);
+        color: white;
+        border: none;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+    .animate-pulse-red {
+        animation: pulse-red 2s infinite;
+    }
+    @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+</style>
+
+	<!-- breadcrumb-section -->
+	<div class="breadcrumb-section breadcrumb-bg">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-8 offset-lg-2 text-center">
+					<div class="breadcrumb-text">
+						<p>Manage Your Inventory</p>
+						<h1>Seller Dashboard</h1>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- end breadcrumb section -->
+
+	<!-- Dashboard Content -->
+    <div class="container my-5">
+        <!-- Stats Row -->
+        <div class="row mb-5 text-white">
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm dashboard-stat-card p-4" style="background: linear-gradient(135deg, #051922 0%, #F28123 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="display-4 font-weight-bold mb-0 text-white">{{ products.count }}</h3>
+                            <p class="mb-0 opacity-8">Active Products</p>
+                        </div>
+                        <i class="fas fa-box-open fa-3x opacity-3"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm dashboard-stat-card p-4" style="background: linear-gradient(135deg, #28a745 0%, #5dd479 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="display-4 font-weight-bold mb-0 text-white">${{ earnings|floatformat:2 }}</h3>
+                            <p class="mb-0 opacity-8">Total Earnings</p>
+                        </div>
+                        <i class="fas fa-hand-holding-usd fa-3x opacity-3"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm dashboard-stat-card p-4" style="background: linear-gradient(135deg, #17a2b8 0%, #5bc0de 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="display-4 font-weight-bold mb-0 text-white">{{ seller_orders.count }}</h3>
+                            <p class="mb-0 opacity-8">Total Orders</p>
+                        </div>
+                        <i class="fas fa-shopping-cart fa-3x opacity-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="font-weight-bold">Inventory Management</h2>
+            <div>
+                <button class="btn btn-outline-dark rounded-pill px-4 shadow-sm" data-toggle="modal" data-target="#categoryModal">
+                    <i class="fas fa-tags mr-2"></i> New Category
+                </button>
+                <button class="btn boxed-btn rounded-pill px-4 ml-2 shadow" data-toggle="modal" data-target="#productModal">
+                    <i class="fas fa-plus mr-2"></i> Add Product
+                </button>
+            </div>
+        </div>
+
+        <!-- Inventory Table -->
+        <div class="card border-0 shadow-lg mb-5 glass-effect" style="border-radius: 20px;">
+            <div class="table-responsive p-4">
+                <table class="table table-hover align-middle inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Stock Status</th>
+                            <th>Category</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td class="font-weight-bold">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="rounded mr-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% endif %}
+                                {{ product.name }}
+                            </td>
+                            <td>${{ product.price }}</td>
+                            <td>
+                                <span class="badge {% if product.stock < 10 %}badge-danger animate-pulse-red{% else %}badge-light text-dark{% endif %} p-2 px-3 rounded-pill shadow-sm">
+                                    {{ product.stock }} in stock
+                                </span>
+                            </td>
+                            <td><span class="badge badge-pill badge-outline-dark border p-2">{{ product.category.name }}</span></td>
+                            <td class="text-right">
+                                <a href="{% url 'update_product' product.pk %}" class="btn btn-sm btn-outline-primary rounded-circle mr-1">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'delete_product' product.pk %}" class="btn btn-sm btn-outline-danger rounded-circle" onclick="return confirm('Are you sure?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center p-5 text-muted">No products added yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <h2 class="font-weight-bold mb-4">Recent Sales</h2>
+        <div class="row">
+            {% for order in seller_orders %}
+            <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm p-4 h-100 d-flex flex-column justify-content-between" style="border-left: 5px solid #F28123 !important; border-radius: 15px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="font-weight-bold mb-0 text-dark">Order #{{ order.id }}</h5>
+                            <small class="text-muted">{{ order.updated_at|date:"M d, Y" }}</small>
+                        </div>
+                        <span class="badge badge-warning p-2 px-3 rounded-pill shadow-sm text-uppercase">{{ order.status }}</span>
+                    </div>
+                    <p class="small text-muted mb-2"><i class="fas fa-user mr-2"></i> {{ order.full_name }}</p>
+                    
+                    <form action="{% url 'seller_update_order_status' order.id %}" method="POST" class="d-flex mt-3">
+                        {% csrf_token %}
+                        <select name="status" class="form-control form-control-sm rounded-pill mr-2">
+                            {% for val, label in status_choices %}
+                                <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3">Update</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0" style="border-radius: 20px;">
+                <div class="modal-header border-0 p-4">
+                    <h4 class="font-weight-bold mb-0">Add New Product</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body p-4 pt-0">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn boxed-btn w-100 rounded-pill mt-3">Publish Product</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0" style="border-radius: 20px;">
+                <div class="modal-header border-0 p-4">
+                    <h4 class="font-weight-bold mb-0">New Category</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body p-4 pt-0 text-center">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ category_form.as_p }}
+                        <input type="hidden" name="create_category" value="1">
+                        <button type="submit" class="btn btn-dark w-100 rounded-pill mt-3">Create Category</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

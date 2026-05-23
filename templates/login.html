@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login | project</title>
+
+	<!-- google font -->
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Poppins:400,700&display=swap" rel="stylesheet">
+	<!-- bootstrap -->
+	<link rel="stylesheet" href="{% static 'assets/bootstrap/css/bootstrap.min.css' %}">
+	<!-- main style -->
+	<link rel="stylesheet" href="{% static 'assets/css/main.css' %}">
+	<!-- responsive -->
+	<link rel="stylesheet" href="{% static 'assets/css/responsive.css' %}">
+
+	<style>
+		body {
+			background: url("{% static 'assets/img/hero-bg.jpg' %}") no-repeat center center fixed;
+			background-size: cover;
+			height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.login-card {
+			background: rgba(255, 255, 255, 0.98);
+			padding: 50px;
+			border-radius: 15px;
+			box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+			width: 100%;
+			max-width: 450px;
+		}
+		.login-card h2 {
+			font-weight: 700;
+			margin-bottom: 30px;
+			color: #051922;
+		}
+		.login-card label {
+			font-weight: 600;
+			color: #051922;
+			margin-bottom: 5px;
+		}
+		.login-card input {
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			padding: 12px;
+			margin-bottom: 20px;
+			width: 100%;
+		}
+		.boxed-btn {
+			width: 100%;
+			border: none;
+			cursor: pointer;
+			font-size: 16px;
+			padding: 12px;
+		}
+		.back-home {
+			display: block;
+			margin-top: 25px;
+			color: #F28123;
+			font-weight: 600;
+			text-decoration: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="login-card text-center">
+		<h2>Login</h2>
+		<form method="post">
+			{% csrf_token %}
+			{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+			<div class="text-left">{{ form.as_p }}</div>
+			<button type="submit" class="boxed-btn">Login</button>
+		</form>
+		<p class="mt-4">Don't have an account? <a href="{% url 'register' %}{% if next %}?next={{ next }}{% endif %}" style="color: #F28123; font-weight: bold;">Register here</a></p>
+		<a href="{% url 'home' %}" class="back-home">← Back to Home</a>
+	</div>
+</body>
+</html>

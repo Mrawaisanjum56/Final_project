@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Sales Orders{% endblock %}
+
+{% block content %}
+<!-- breadcrumb-section -->
+<div class="breadcrumb-section breadcrumb-bg">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2 text-center">
+                <div class="breadcrumb-text">
+                    <p>Manage your sales</p>
+                    <h1>Your Orders</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end breadcrumb section -->
+
+<!-- orders list -->
+<div class="cart-section mt-150 mb-150">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 col-md-12">
+                <div class="cart-table-wrap">
+                    <table class="cart-table">
+                        <thead class="cart-table-head">
+                            <tr class="table-head-row">
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Your Items in this Order</th>
+                                <th>Current Status</th>
+                                <th>Update Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in seller_orders %}
+                            <tr class="table-body-row">
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.full_name }}<br><small>{{ order.customer.email }}</small></td>
+                                <td>{{ order.updated_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <ul style="list-style: none; padding: 0; margin: 0;">
+                                        {% for item in order.items.all %}
+                                            {% if item.product.farmer == user %}
+                                                <li>{{ item.product.name }} (x{{ item.quantity }})</li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td>
+                                    {% if order.status == 'Pending' %}<span style="color: orange; font-weight: bold;">Pending</span>
+                                    {% elif order.status == 'Confirmed' %}<span style="color: green; font-weight: bold;">Confirmed</span>
+                                    {% elif order.status == 'Rejected' %}<span style="color: red; font-weight: bold;">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="{% url 'seller_update_order_status' order.id %}" method="POST" style="display: flex; align-items: center; gap: 10px;">
+                                        {% csrf_token %}
+                                        <select name="status" class="form-control form-control-sm" style="width: 150px;">
+                                            {% for value, display in status_choices %}<option value="{{ value }}" {% if order.status == value %}selected{% endif %}>{{ display }}</option>{% endfor %}
+                                        </select>
+                                        <button type="submit" class="boxed-btn" style="border: none; padding: 10px 15px; line-height: 1; font-size: 14px;">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center">You have no orders yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end orders list -->
+{% endblock %}
