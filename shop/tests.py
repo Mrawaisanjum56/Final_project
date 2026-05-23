@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
@@ -172,3 +173,43 @@ class ProductMarketPricingTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('Please choose an image', response.json()['error'])
+
+
+class ScraperFallbackTests(TestCase):
+    @patch(
+        'shop.management.commands.scrape_amis_prices.COMMODITY_PAGES',
+        {'Wheat': {'commodity_id': 1, 'search_type': 0}},
+    )
+    @patch('shop.management.commands.scrape_amis_prices.requests.Session.get')
+    def test_scraper_falls_back_to_previous_wheat_price(self, mock_get):
+        class FakeResponse:
+            text = '<html><body><table><tr><td>No data available</td></tr></table></body></html>'
+
+            @staticmethod
+            def raise_for_status():
+                return None
+
+        mock_get.return_value = FakeResponse()
+
+        target_date = timezone.localdate()
+        MarketPrice.objects.create(
+            price_date=target_date - timedelta(days=1),
+            commodity_type='Wheat',
+            variety='',
+            market_location='Lahore',
+            price=Decimal('2800.00'),
+        )
+
+        call_command(
+            'scrape_amis_prices',
+            date=target_date.strftime('%Y-%m-%d'),
+            market='Lahore',
+        )
+
+        today_wheat = MarketPrice.objects.get(
+            price_date=target_date,
+            commodity_type='Wheat',
+            variety='',
+            market_location='Lahore',
+        )
+        self.assertEqual(today_wheat.price, Decimal('2800.00'))
