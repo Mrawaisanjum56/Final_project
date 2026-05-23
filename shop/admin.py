@@ -5,15 +5,28 @@ from .models import Product, CustomUser, Order, OrderItem, Category, MarketPrice
 admin.site.register(Category)
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'market_location', 'variety', 'price', 'quality_grade', 'stock', 'farmer', 'created_at')
+    list_display = (
+        'name', 'category', 'market_location', 'variety',
+        'price', 'quality_grade', 'quality_confidence',
+        'stock', 'farmer', 'created_at'
+    )
     list_filter = ('category', 'market_location', 'created_at')
     search_fields = ('name', 'market_location', 'variety')
-    readonly_fields = ('priced_at', 'price_source')
+
+    # Make these non-editable in admin
+    readonly_fields = (
+        'price',
+        'quality_grade',
+        'quality_confidence',
+        'priced_at',
+        'price_source',
+        'created_at',
+    )
 
     def save_model(self, request, obj, form, change):
+        # superuser can still override via backend flags, but fields are read-only in UI
         allow_override = request.user.is_superuser
         obj.save(allow_admin_override=allow_override, enforce_market_rules=not allow_override)
-
 admin.site.register(Product, ProductAdmin)
 
 
