@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -64,6 +66,12 @@ class MarketPrice(models.Model):
         return f"{self.price_date} | {self.commodity_type} | {self.market_location} | {self.price}"
 
 class Product(models.Model):
+    QUALITY_PRICE_MULTIPLIERS = {
+        'A': Decimal('1.00'),
+        'B': Decimal('0.85'),
+        'C': Decimal('0.65'),
+    }
+
     farmer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
     name = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
@@ -124,6 +132,14 @@ class Product(models.Model):
         self.priced_at = timezone.now()
         return market_price
 
+    def apply_quality_grade_price_adjustment(self):
+        if not self.is_wheat_commodity:
+            return
+        multiplier = self.QUALITY_PRICE_MULTIPLIERS.get((self.quality_grade or '').upper())
+        if multiplier is None:
+            return
+        self.price = (self.price * multiplier).quantize(Decimal('0.01'))
+
     def save(self, *args, **kwargs):
         allow_admin_override = kwargs.pop('allow_admin_override', False)
         enforce_market_rules = kwargs.pop('enforce_market_rules', True)
@@ -155,6 +171,8 @@ class Product(models.Model):
                         f"commodity='{self.commodity_type}', variety='{self.variety}', "
                         f"location='{self.market_location}'."
                     )
+            else:
+                self.apply_quality_grade_price_adjustment()
 
         super().save(*args, **kwargs)
 

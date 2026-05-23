@@ -105,7 +105,7 @@
                                     {% for item in order.items.all %}
                                     <tr>
                                         <td>{{ item.product.name }} <strong>(x{{ item.quantity }})</strong></td>
-                                        <td>${{ item.get_total }}</td>
+                                        <td>PKR {{ item.get_total }}</td>
                                     </tr>
                                     {% endfor %}
                                 {% endif %}
@@ -113,15 +113,15 @@
 							<tbody class="checkout-details">
 								<tr>
 									<td>Subtotal</td>
-									<td>${{ order.get_cart_total|default:"0.00" }}</td>
+									<td>PKR {{ order.get_cart_total|default:"0.00" }}</td>
 								</tr>
 								<tr>
 									<td>Shipping</td>
-									<td>$5</td>
+									<td>PKR 5</td>
 								</tr>
 								<tr>
 									<td>Total</td>
-									<td>${{ order.get_cart_total|add:5|default:"5.00" }}</td>
+									<td>PKR {{ order.get_cart_total|add:5|default:"5.00" }}</td>
 								</tr>
 							</tbody>
 						</table>

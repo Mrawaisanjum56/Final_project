@@ -58,7 +58,7 @@
                                         {% endif %}
                                     </td>
                                     <td class="product-name">{{ item.product.name }}</td>
-                                    <td class="product-price">${{ item.price }}</td>
+                                    <td class="product-price">PKR {{ item.price }}</td>
                                     <td class="product-quantity">
                                         <!-- Buyer ki quantity ka box (editable) -->
                                         <form action="{% url 'update_cart' item.id %}" method="POST" class="form-inline justify-content-center">
@@ -69,7 +69,7 @@
                                         <!-- Product ki actual quantity (stock) ka box -->
                                         <small class="d-block mt-1">In Stock: {{ item.product.stock }}</small>
                                     </td>
-                                    <td class="product-total">${{ item.get_total }}</td>
+                                    <td class="product-total">PKR {{ item.get_total }}</td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
@@ -94,15 +94,15 @@
                         <tbody>
                             <tr class="total-data">
                                 <td><strong>Subtotal: </strong></td>
-                                <td>${{ order.get_cart_total|default:"0.00" }}</td>
+                                <td>PKR {{ order.get_cart_total|default:"0.00" }}</td>
                             </tr>
                             <tr class="total-data">
                                 <td><strong>Shipping: </strong></td>
-                                <td>$5.00</td>
+                                <td>PKR 5.00</td>
                             </tr>
                             <tr class="total-data">
                                 <td><strong>Total: </strong></td>
-                                <td>${{ order.get_cart_total|add:5|default:"5.00" }}</td>
+                                <td>PKR {{ order.get_cart_total|add:5|default:"5.00" }}</td>
                             </tr>
                         </tbody>
                     </table>

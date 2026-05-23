@@ -47,7 +47,7 @@
 							{% endwith %}
 							<span class="text-muted ml-2">({{ reviews.count }} Reviews)</span>
 						</div>
-						<p class="single-product-pricing"><span>Per Kg</span> ${{ product.price }}</p>
+						<p class="single-product-pricing"><span>Per Kg</span> PKR {{ product.price }}</p>
 						<p>{{ product.description }}</p>
 						<div class="single-product-form">
 							<form action="{% url 'add_to_cart' product.id %}" method="POST">
@@ -148,7 +148,7 @@
 							</a>
 						</div>
 						<h3>{{ p.name }}</h3>
-						<p class="product-price"><span>Per Kg</span> {{ p.price }}$ </p>
+						<p class="product-price"><span>Per Kg</span> PKR {{ p.price }}</p>
 						<a href="{% url 'add_to_cart' p.id %}" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
 					</div>
 				</div>
