@@ -58,7 +58,7 @@ class ProductMarketPricingTests(TestCase):
         with self.assertRaises(ValidationError):
             product.apply_market_price(strict=True)
 
-    def test_seller_tampering_price_and_grade_is_locked_on_save(self):
+    def test_seller_cannot_tamper_with_price_and_grade(self):
         product = Product.objects.create(
             farmer=self.seller,
             name='Locked Wheat',

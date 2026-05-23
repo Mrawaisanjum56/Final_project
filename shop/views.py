@@ -293,10 +293,16 @@ def update_product(request, pk):
                     )
                 )
                 if should_run_quality:
-                    grade, confidence = assess_wheat_quality(updated_product.image)
-                    updated_product.quality_grade = grade
-                    updated_product.quality_confidence = confidence
-                    messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
+                    try:
+                        grade, confidence = assess_wheat_quality(updated_product.image)
+                    except Exception:
+                        updated_product.quality_grade = None
+                        updated_product.quality_confidence = None
+                        messages.warning(request, 'Wheat quality assessment failed. Please upload a valid image and try again.')
+                    else:
+                        updated_product.quality_grade = grade
+                        updated_product.quality_confidence = confidence
+                        messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
                 elif not updated_product.is_wheat_commodity:
                     updated_product.quality_grade = None
                     updated_product.quality_confidence = None
@@ -348,10 +354,16 @@ def farmer_dashboard(request):
                     product_form.add_error(None, exc.messages[0])
                 else:
                     if product.is_wheat_commodity and product.image:
-                        grade, confidence = assess_wheat_quality(product.image)
-                        product.quality_grade = grade
-                        product.quality_confidence = confidence
-                        messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
+                        try:
+                            grade, confidence = assess_wheat_quality(product.image)
+                        except Exception:
+                            product.quality_grade = None
+                            product.quality_confidence = None
+                            messages.warning(request, 'Wheat quality assessment failed. Please upload a valid image and try again.')
+                        else:
+                            product.quality_grade = grade
+                            product.quality_confidence = confidence
+                            messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
                     else:
                         product.quality_grade = None
                         product.quality_confidence = None

@@ -80,12 +80,17 @@ class Command(BaseCommand):
         except ValueError as exc:
             raise CommandError(f"Invalid --date value '{date_arg}': {exc}") from exc
 
-        response = requests.get(
-            target_url,
-            timeout=45,
-            headers={'User-Agent': 'Mozilla/5.0 (compatible; market-price-bot/1.0)'},
-        )
-        response.raise_for_status()
+        try:
+            response = requests.get(
+                target_url,
+                timeout=45,
+                headers={'User-Agent': 'Mozilla/5.0 (compatible; market-price-bot/1.0)'},
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            raise CommandError(
+                f"Failed to fetch AMIS data from {target_url}. Check URL/network connectivity and retry."
+            ) from exc
 
         soup = BeautifulSoup(response.text, 'html.parser')
         tables = soup.find_all('table')

@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +29,13 @@ def _load_mobilenet():
 
 
 def _image_to_array(image_input):
-    if hasattr(image_input, 'open'):
-        image_input.open()
-    image = Image.open(image_input).convert('RGB').resize((224, 224))
-    return np.array(image, dtype=np.float32)
+    try:
+        if hasattr(image_input, 'open'):
+            image_input.open()
+        image = Image.open(image_input).convert('RGB').resize((224, 224))
+        return np.array(image, dtype=np.float32)
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ValueError('Unable to process image. Please upload a valid image file.') from exc
 
 
 def _grade_from_confidence(confidence_pct):

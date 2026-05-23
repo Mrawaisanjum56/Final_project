@@ -124,7 +124,7 @@ class Product(models.Model):
         enforce_market_rules = kwargs.pop('enforce_market_rules', True)
         allow_quality_override = kwargs.pop('allow_quality_override', False)
 
-        if enforce_market_rules and self.farmer_id and not allow_admin_override:
+        if self._should_enforce_market_rules(enforce_market_rules, allow_admin_override):
             if not self.is_wheat_commodity:
                 self.quality_grade = None
                 self.quality_confidence = None
@@ -145,6 +145,9 @@ class Product(models.Model):
                 output_size = (3840, 2160)
                 img.thumbnail(output_size, Image.LANCZOS)
                 img.save(self.image.path, quality=95, optimize=True)
+
+    def _should_enforce_market_rules(self, enforce_market_rules, allow_admin_override):
+        return enforce_market_rules and bool(self.farmer_id) and not allow_admin_override
 
     @property
     def average_rating(self):
