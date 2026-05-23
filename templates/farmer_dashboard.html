@@ -34,6 +34,44 @@
     .animate-pulse-red {
         animation: pulse-red 2s infinite;
     }
+    #productModal .modal-dialog {
+        max-width: 900px;
+    }
+    #productModal .modal-body {
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+    }
+    .compact-product-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem 1rem;
+    }
+    .compact-product-form .form-group {
+        margin-bottom: 0;
+    }
+    .compact-product-form .form-group label {
+        margin-bottom: 0.25rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .compact-product-form .form-control {
+        height: 40px !important;
+        font-size: 0.9rem;
+    }
+    .compact-product-form .form-control-file {
+        font-size: 0.85rem;
+    }
+    .compact-product-form .form-group:nth-of-type(5),
+    .compact-product-form .form-group:nth-of-type(7),
+    .compact-product-form .js-model-error,
+    .compact-product-form .boxed-btn {
+        grid-column: 1 / -1;
+    }
+    @media (max-width: 767.98px) {
+        .compact-product-form {
+            grid-template-columns: 1fr;
+        }
+    }
     @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
 
@@ -189,10 +227,10 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body p-4 pt-0">
-                    <form method="post" enctype="multipart/form-data">
+                    <form method="post" enctype="multipart/form-data" class="compact-product-form">
                         {% csrf_token %}
                         {% include 'includes/product_form_fields.html' with form=form %}
-                        <button type="submit" class="btn boxed-btn w-100 rounded-pill mt-3">Publish Product</button>
+                        <button type="submit" class="btn boxed-btn w-100 rounded-pill mt-2">Publish Product</button>
                     </form>
                 </div>
             </div>
