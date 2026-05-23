@@ -277,7 +277,6 @@ def update_product(request, pk):
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             updated_product = form.save(commit=False)
-            updated_product.farmer = request.user
             try:
                 updated_product.apply_market_price(strict=True)
             except ValidationError as exc:
