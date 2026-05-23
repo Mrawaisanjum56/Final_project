@@ -18,7 +18,7 @@ def _load_mobilenet():
     try:
         from tensorflow.keras.applications import MobileNetV2
         from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-    except Exception as exc:
+    except (ImportError, OSError) as exc:
         _MOBILENET_IMPORT_FAILED = True
         logger.warning("MobileNetV2 unavailable, using fallback heuristic: %s", exc)
         return None, None

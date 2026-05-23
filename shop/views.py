@@ -295,7 +295,7 @@ def update_product(request, pk):
                 if should_run_quality:
                     try:
                         grade, confidence = assess_wheat_quality(updated_product.image)
-                    except Exception:
+                    except ValueError:
                         updated_product.quality_grade = None
                         updated_product.quality_confidence = None
                         messages.warning(request, 'Wheat quality assessment failed. Please upload a valid image and try again.')
@@ -356,7 +356,7 @@ def farmer_dashboard(request):
                     if product.is_wheat_commodity and product.image:
                         try:
                             grade, confidence = assess_wheat_quality(product.image)
-                        except Exception:
+                        except ValueError:
                             product.quality_grade = None
                             product.quality_confidence = None
                             messages.warning(request, 'Wheat quality assessment failed. Please upload a valid image and try again.')

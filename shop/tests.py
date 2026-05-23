@@ -87,3 +87,22 @@ class ProductMarketPricingTests(TestCase):
         self.assertNotIn('price', form.fields)
         self.assertNotIn('quality_grade', form.fields)
         self.assertNotIn('quality_confidence', form.fields)
+
+    def test_existing_product_keeps_previous_price_when_today_market_missing(self):
+        product = Product.objects.create(
+            farmer=self.seller,
+            name='Stored Wheat',
+            category=self.wheat,
+            variety='A1',
+            market_location='Lahore',
+            price=Decimal('100.00'),
+            description='desc',
+            stock=5,
+        )
+        self.market_price.delete()
+
+        product.price = Decimal('9000.00')
+        product.save()
+        product.refresh_from_db()
+
+        self.assertEqual(product.price, Decimal('2750.00'))

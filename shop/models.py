@@ -120,7 +120,7 @@ class Product(models.Model):
         return market_price
 
     def save(self, *args, **kwargs):
-        allow_admin_override = kwargs.pop('allow_admin_override', getattr(self, '_allow_admin_override', False))
+        allow_admin_override = kwargs.pop('allow_admin_override', False)
         enforce_market_rules = kwargs.pop('enforce_market_rules', True)
         allow_quality_override = kwargs.pop('allow_quality_override', False)
 
@@ -134,7 +134,18 @@ class Product(models.Model):
                     self.quality_grade = existing['quality_grade']
                     self.quality_confidence = existing['quality_confidence']
 
-            self.apply_market_price(strict=False)
+            matched_price = self.apply_market_price(strict=False)
+            if matched_price is None:
+                if self.pk:
+                    existing_price_fields = Product.objects.filter(pk=self.pk).values(
+                        'price', 'price_source_id', 'priced_at'
+                    ).first()
+                    if existing_price_fields:
+                        self.price = existing_price_fields['price']
+                        self.price_source_id = existing_price_fields['price_source_id']
+                        self.priced_at = existing_price_fields['priced_at']
+                else:
+                    raise ValidationError("No market price found for today's commodity, variety, and market location.")
 
         super().save(*args, **kwargs)
 

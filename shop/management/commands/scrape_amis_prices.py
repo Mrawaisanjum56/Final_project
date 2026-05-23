@@ -83,7 +83,7 @@ class Command(BaseCommand):
         try:
             response = requests.get(
                 target_url,
-                timeout=45,
+                timeout=getattr(settings, 'AMIS_SCRAPE_TIMEOUT', 45),
                 headers={'User-Agent': 'Mozilla/5.0 (compatible; market-price-bot/1.0)'},
             )
             response.raise_for_status()

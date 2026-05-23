@@ -11,8 +11,7 @@ class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ('priced_at', 'price_source')
 
     def save_model(self, request, obj, form, change):
-        obj._allow_admin_override = request.user.is_staff
-        super().save_model(request, obj, form, change)
+        obj.save(allow_admin_override=request.user.is_staff, enforce_market_rules=not request.user.is_staff)
 
 admin.site.register(Product, ProductAdmin)
 
