@@ -280,7 +280,7 @@ def update_product(request, pk):
             try:
                 updated_product.apply_market_price(strict=True)
             except ValidationError as exc:
-                form.add_error(None, exc.messages[0])
+                form.add_error(None, exc.messages[0] if exc.messages else str(exc))
             else:
                 should_run_quality = (
                     updated_product.is_wheat_commodity and
@@ -350,7 +350,7 @@ def farmer_dashboard(request):
                 try:
                     product.apply_market_price(strict=True)
                 except ValidationError as exc:
-                    product_form.add_error(None, exc.messages[0])
+                    product_form.add_error(None, exc.messages[0] if exc.messages else str(exc))
                 else:
                     if product.is_wheat_commodity and product.image:
                         try:
