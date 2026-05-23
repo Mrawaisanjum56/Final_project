@@ -108,10 +108,13 @@ class Product(models.Model):
         return self._price_queryset(on_date).order_by('-scraped_at').first()
 
     def apply_market_price(self, on_date=None, strict=False):
-        market_price = self.get_market_price(on_date=on_date)
+        target_date = on_date or timezone.localdate()
+        market_price = self.get_market_price(on_date=target_date)
         if not market_price:
             if strict:
-                raise ValidationError("No market price found for today's commodity, variety, and market location.")
+                raise ValidationError(
+                    f"No market price found for {target_date} matching commodity, variety, and market location."
+                )
             return None
 
         self.price = market_price.price
@@ -145,7 +148,9 @@ class Product(models.Model):
                         self.price_source_id = existing_price_fields['price_source_id']
                         self.priced_at = existing_price_fields['priced_at']
                 else:
-                    raise ValidationError("No market price found for today's commodity, variety, and market location.")
+                    raise ValidationError(
+                        f"No market price found for {timezone.localdate()} matching commodity, variety, and market location."
+                    )
 
         super().save(*args, **kwargs)
 
