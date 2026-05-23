@@ -137,6 +137,9 @@ EMAIL_HOST_USER = 'muhammadhairtemoorlatif@gmail.com'
 EMAIL_HOST_PASSWORD = 'kmziishtrpqgygbn' # Maslan: 'vwyzabcdefghijkl'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+
+# ML model path (local file)
+WHEAT_QUALITY_MODEL_PATH = BASE_DIR / "models" / "wheat_quality.keras"
 # E-commerce Business Logic
 SHIPPING_COST = 5
 

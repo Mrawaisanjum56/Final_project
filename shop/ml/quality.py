@@ -1,68 +1,80 @@
 import logging
-
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 
+from django.conf import settings
+
 logger = logging.getLogger(__name__)
 
-_MOBILENET_MODEL = None
-_MOBILENET_PREPROCESS = None
-_MOBILENET_IMPORT_FAILED = False
+_MODEL = None
+_MODEL_LOAD_FAILED = False
+
+# Must match your training label order:
+# if your model was trained in different order, change this tuple accordingly.
+CLASS_ORDER = ("A", "B", "C")
 
 
-def _load_mobilenet():
-    global _MOBILENET_MODEL, _MOBILENET_PREPROCESS, _MOBILENET_IMPORT_FAILED
-    if _MOBILENET_MODEL is not None or _MOBILENET_IMPORT_FAILED:
-        return _MOBILENET_MODEL, _MOBILENET_PREPROCESS
+def _load_model():
+    global _MODEL, _MODEL_LOAD_FAILED
+    if _MODEL is not None or _MODEL_LOAD_FAILED:
+        return _MODEL
 
     try:
-        from tensorflow.keras.applications import MobileNetV2
-        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+        from tensorflow import keras
     except (ImportError, OSError) as exc:
-        _MOBILENET_IMPORT_FAILED = True
-        logger.warning("MobileNetV2 unavailable, using fallback heuristic: %s", exc)
-        return None, None
+        _MODEL_LOAD_FAILED = True
+        logger.warning("TensorFlow unavailable; cannot load .keras model: %s", exc)
+        return None
 
-    _MOBILENET_MODEL = MobileNetV2(weights='imagenet')
-    _MOBILENET_PREPROCESS = preprocess_input
-    return _MOBILENET_MODEL, _MOBILENET_PREPROCESS
+    model_path = getattr(settings, "WHEAT_QUALITY_MODEL_PATH", None)
+    if not model_path:
+        _MODEL_LOAD_FAILED = True
+        logger.error("WHEAT_QUALITY_MODEL_PATH is not configured in settings.py")
+        return None
+
+    _MODEL = keras.models.load_model(model_path)
+    return _MODEL
 
 
-def _image_to_array(image_input):
+def _preprocess_224_rgb(image_input):
+    """
+    Returns float32 array shaped (1, 224, 224, 3)
+    Normalization: 0..1 (common). If your training used another scheme
+    (e.g. [-1,1] or ImageNet preprocess), tell me and I’ll adjust.
+    """
     try:
-        if hasattr(image_input, 'open'):
+        if hasattr(image_input, "open"):
             image_input.open()
-        image = Image.open(image_input).convert('RGB').resize((224, 224))
-        return np.array(image, dtype=np.float32)
+        img = Image.open(image_input).convert("RGB").resize((224, 224))
     except (UnidentifiedImageError, OSError) as exc:
-        raise ValueError('Unable to process image. Please upload a valid image file.') from exc
+        raise ValueError("Invalid image file. Please upload a valid image.") from exc
 
-
-def _grade_from_confidence(confidence_pct):
-    if confidence_pct >= 80:
-        return 'A'
-    if confidence_pct >= 60:
-        return 'B'
-    return 'C'
+    arr = np.asarray(img, dtype=np.float32) / 255.0
+    return np.expand_dims(arr, axis=0)
 
 
 def assess_wheat_quality(image_input):
+    """
+    Returns: (grade: 'A'|'B'|'C'|None, confidence_pct: float|None)
+    """
     if image_input is None:
         return None, None
 
-    image_array = _image_to_array(image_input)
-    model, preprocess = _load_mobilenet()
+    model = _load_model()
+    if model is None:
+        # If you want: raise error instead of returning None
+        return None, None
 
-    if model is not None and preprocess is not None:
-        batch = np.expand_dims(preprocess(image_array.copy()), axis=0)
-        probs = model.predict(batch, verbose=0)[0]
-        confidence_pct = float(np.max(probs) * 100)
-        grade = _grade_from_confidence(confidence_pct)
-        return grade, round(confidence_pct, 2)
+    x = _preprocess_224_rgb(image_input)
 
-    grayscale = np.mean(image_array, axis=2)
-    brightness = float(np.mean(grayscale) / 255.0)
-    texture = float(np.std(grayscale) / 128.0)
-    heuristic_confidence = max(0.0, min(100.0, (0.6 * brightness + 0.4 * texture) * 100.0))
-    grade = _grade_from_confidence(heuristic_confidence)
-    return grade, round(heuristic_confidence, 2)
+    # Expecting shape (1, 3) probabilities for A/B/C
+    probs = model.predict(x, verbose=0)
+    probs = np.asarray(probs).reshape(-1)
+
+    if probs.shape[0] != 3:
+        raise ValueError(f"Expected 3-class output (A/B/C). Got shape={probs.shape}.")
+
+    idx = int(np.argmax(probs))
+    grade = CLASS_ORDER[idx]
+    confidence_pct = float(probs[idx]) * 100.0
+    return grade, round(confidence_pct, 2)
