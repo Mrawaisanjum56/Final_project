@@ -1,0 +1,52 @@
+/* Subtle modern styling for Django admin */
+:root {
+    --admin-primary: #f28123;
+    --admin-dark: #051922;
+}
+
+#header {
+    background: linear-gradient(135deg, var(--admin-dark), #0b2d3d);
+}
+
+#branding h1,
+#branding h1 a:link,
+#branding h1 a:visited {
+    color: #fff;
+}
+
+div.breadcrumbs {
+    background: linear-gradient(90deg, rgba(242, 129, 35, 0.14), rgba(5, 25, 34, 0.05));
+    color: #1d2d35;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+    background: linear-gradient(135deg, rgba(242, 129, 35, 0.95), rgba(224, 106, 0, 0.95));
+}
+
+input[type="submit"],
+.button,
+input[type="button"],
+.submit-row input,
+a.button {
+    border-radius: 999px;
+}
+
+.submit-row input.default {
+    background: var(--admin-primary);
+}
+
+.submit-row input.default:hover {
+    background: #de6b0d;
+}
+
+table thead th {
+    background: #102a36;
+    color: #fff;
+}
+
+tr.row1:hover,
+tr.row2:hover {
+    background: rgba(242, 129, 35, 0.08);
+}

@@ -12,6 +12,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Poppins:400,700&display=swap" rel="stylesheet">
 	<!-- bootstrap -->
 	<link rel="stylesheet" href="{% static 'assets/bootstrap/css/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% static 'assets/css/all.min.css' %}">
 	<!-- main style -->
 	<link rel="stylesheet" href="{% static 'assets/css/main.css' %}">
 	<!-- responsive -->
@@ -19,8 +20,9 @@
 
 	<style>
 		body {
-			background: url("{% static 'assets/img/hero-bg.jpg' %}") no-repeat center center fixed;
-			background-size: cover;
+			background: linear-gradient(130deg, #041e2a, #0f4258, #f28123);
+			background-size: 200% 200%;
+			animation: bgShift 10s ease infinite;
 			height: auto;
 			min-height: 100vh;
 			display: flex;
@@ -28,13 +30,16 @@
 			justify-content: center;
 			padding: 24px 12px;
 			overflow-y: auto;
+			position: relative;
 		}
 		body::before {
 			content: "";
 			position: fixed;
 			inset: 0;
-			background: rgba(5, 25, 34, 0.5);
+			background: radial-gradient(circle at 15% 20%, rgba(242, 129, 35, 0.45), transparent 35%),
+						radial-gradient(circle at 85% 80%, rgba(82, 194, 255, 0.3), transparent 42%);
 			z-index: 0;
+			animation: floatBackdrop 8s ease-in-out infinite alternate;
 		}
 		.register-card {
 			position: relative;
@@ -70,6 +75,23 @@
 			padding: 10px 12px;
 			margin-bottom: 4px;
 			width: 100%;
+		}
+		.register-card input[type="password"] {
+			padding-right: 42px;
+		}
+		.password-toggle-wrap {
+			position: relative;
+		}
+		.password-toggle-btn {
+			position: absolute;
+			right: 12px;
+			top: 50%;
+			transform: translateY(-50%);
+			border: none;
+			background: transparent;
+			color: #6e7f89;
+			cursor: pointer;
+			padding: 0;
 		}
 		.register-card textarea {
 			height: 72px; 
@@ -109,6 +131,15 @@
 				border-radius: 14px;
 			}
 		}
+		@keyframes bgShift {
+			0% { background-position: 0% 50%; }
+			50% { background-position: 100% 50%; }
+			100% { background-position: 0% 50%; }
+		}
+		@keyframes floatBackdrop {
+			from { transform: translateY(0); }
+			to { transform: translateY(24px); }
+		}
 	</style>
 </head>
 <body>
@@ -124,5 +155,28 @@
 		<p class="mt-2 mb-1">Already have an account? <a href="{% url 'login' %}{% if next %}?next={{ next }}{% endif %}" style="color: #F28123; font-weight: bold;">Login here</a></p>
 		<a href="{% url 'home' %}" style="color: #F28123; font-weight: 600; text-decoration: none; display: block; margin-top: 5px;">← Back to Home</a>
 	</div>
+	<script>
+		(function () {
+			const passwordFields = document.querySelectorAll('input[type="password"]');
+			passwordFields.forEach(function (input) {
+				const wrapper = document.createElement('div');
+				wrapper.className = 'password-toggle-wrap';
+				input.parentNode.insertBefore(wrapper, input);
+				wrapper.appendChild(input);
+
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'password-toggle-btn';
+				button.innerHTML = '<i class="fas fa-eye"></i>';
+				button.setAttribute('aria-label', 'Show password');
+				button.addEventListener('click', function () {
+					const isHidden = input.type === 'password';
+					input.type = isHidden ? 'text' : 'password';
+					button.innerHTML = isHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+				});
+				wrapper.appendChild(button);
+			});
+		})();
+	</script>
 </body>
 </html>

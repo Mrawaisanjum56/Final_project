@@ -144,6 +144,27 @@ class Command(BaseCommand):
                     break
 
             if picked_price is None:
+                if commodity_type.lower() == "wheat":
+                    fallback_qs = MarketPrice.objects.filter(
+                        commodity_type__iexact=commodity_type,
+                        price_date__lt=price_date,
+                    )
+                    if market_filter:
+                        fallback_qs = fallback_qs.filter(
+                            market_location__iexact=market_filter.strip()
+                        )
+                    fallback_price = fallback_qs.order_by("-price_date", "-scraped_at").first()
+                    if fallback_price:
+                        picked_price = fallback_price.price
+                        picked_unit = fallback_price.unit or picked_unit
+                        picked_market = fallback_price.market_location or picked_market
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"Wheat price fallback used from {fallback_price.price_date} for {price_date}."
+                            )
+                        )
+
+            if picked_price is None:
                 skipped += 1
                 continue
 

@@ -13,20 +13,26 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'market_location', 'created_at')
     search_fields = ('name', 'market_location', 'variety')
 
-    # Make these non-editable in admin
-    readonly_fields = (
-        'price',
-        'quality_grade',
-        'quality_confidence',
-        'priced_at',
-        'price_source',
-        'created_at',
-    )
+    def get_readonly_fields(self, request, obj=None):
+        base_fields = (
+            'quality_grade',
+            'quality_confidence',
+            'priced_at',
+            'price_source',
+            'created_at',
+        )
+        # Keep price editable on add form to avoid required-field creation errors.
+        if obj is None:
+            return base_fields
+        return ('price',) + base_fields
 
     def save_model(self, request, obj, form, change):
         # superuser can still override via backend flags, but fields are read-only in UI
         allow_override = request.user.is_superuser
         obj.save(allow_admin_override=allow_override, enforce_market_rules=not allow_override)
+
+    class Media:
+        css = {'all': ('shop/admin_theme.css',)}
 admin.site.register(Product, ProductAdmin)
 
 
@@ -35,6 +41,9 @@ class MarketPriceAdmin(admin.ModelAdmin):
     list_display = ('price_date', 'commodity_type', 'variety', 'market_location', 'region', 'unit', 'price', 'source', 'scraped_at')
     list_filter = ('price_date', 'commodity_type', 'market_location', 'region', 'source')
     search_fields = ('commodity_type', 'variety', 'market_location', 'region')
+
+    class Media:
+        css = {'all': ('shop/admin_theme.css',)}
 
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
@@ -45,6 +54,9 @@ class CustomUserAdmin(UserAdmin):
     )
     list_display = ('username', 'email', 'user_type', 'is_staff')
     list_filter = ('user_type', 'is_staff', 'is_active')
+
+    class Media:
+        css = {'all': ('shop/admin_theme.css',)}
 
 admin.site.register(CustomUser, CustomUserAdmin)
 
@@ -68,5 +80,8 @@ class OrderAdmin(admin.ModelAdmin):
         if obj.id:
             return obj.get_cart_total
         return 0
+
+    class Media:
+        css = {'all': ('shop/admin_theme.css',)}
 
 admin.site.register(Order, OrderAdmin)
