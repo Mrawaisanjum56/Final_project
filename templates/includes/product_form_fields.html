@@ -72,9 +72,7 @@
 <div class="text-danger small mb-2 js-model-error"></div>
 
 <script>
-    if (!window.productModelRunnerBound) {
-        window.productModelRunnerBound = true;
-
+    (function () {
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -82,18 +80,39 @@
             return '';
         }
 
+        function getCsrfToken(form) {
+            const hiddenToken = form.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (hiddenToken && hiddenToken.value) {
+                return hiddenToken.value;
+            }
+            return getCookie('csrftoken');
+        }
+
+        async function parseResponse(response) {
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                return response.json();
+            }
+            const text = await response.text();
+            return { error: text || 'Failed to run model.' };
+        }
+
         async function runModel(button) {
             const form = button.closest('form');
+            if (!form) return;
+
             const errorBox = form.querySelector('.js-model-error');
             const qualityGrade = form.querySelector('.js-quality-grade');
             const qualityConfidence = form.querySelector('.js-quality-confidence');
             const autoPrice = form.querySelector('.js-auto-price');
-            const imageField = form.querySelector('input[name="image"]');
-            const categoryField = form.querySelector('select[name="category"]');
-            const varietyField = form.querySelector('input[name="variety"]');
-            const locationField = form.querySelector('input[name="market_location"]');
+            const imageField = form.querySelector('[name="image"]');
+            const categoryField = form.querySelector('[name="category"]');
+            const varietyField = form.querySelector('[name="variety"]');
+            const locationField = form.querySelector('[name="market_location"]');
 
-            errorBox.textContent = '';
+            if (errorBox) {
+                errorBox.textContent = '';
+            }
             button.disabled = true;
             button.textContent = 'Running...';
 
@@ -108,19 +127,25 @@
             try {
                 const response = await fetch("{% url 'analyze_product_listing' %}", {
                     method: 'POST',
-                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    headers: {
+                        'X-CSRFToken': getCsrfToken(form),
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
                     body: payload,
                     credentials: 'same-origin'
                 });
-                const data = await response.json();
+                const data = await parseResponse(response);
                 if (!response.ok) {
                     throw new Error(data.error || 'Failed to run model.');
                 }
-                qualityGrade.value = data.quality_grade || '';
-                qualityConfidence.value = data.quality_confidence || '';
-                autoPrice.value = data.price || '';
+                if (qualityGrade) qualityGrade.value = data.quality_grade || '';
+                if (qualityConfidence) qualityConfidence.value = data.quality_confidence || '';
+                if (autoPrice) autoPrice.value = data.price || '';
             } catch (error) {
-                errorBox.textContent = error.message;
+                if (errorBox) {
+                    errorBox.textContent = error.message;
+                }
             } finally {
                 button.disabled = false;
                 button.textContent = 'Run Model';
@@ -130,7 +155,8 @@
         document.addEventListener('click', function (event) {
             const button = event.target.closest('.js-run-model');
             if (!button) return;
+            event.preventDefault();
             runModel(button);
         });
-    }
+    })();
 </script>
