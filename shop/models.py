@@ -113,7 +113,9 @@ class Product(models.Model):
         if not market_price:
             if strict:
                 raise ValidationError(
-                    f"No market price found for {target_date} matching commodity, variety, and market location."
+                    f"No market price found for {target_date} matching "
+                    f"commodity='{self.commodity_type}', variety='{self.variety}', "
+                    f"location='{self.market_location}'."
                 )
             return None
 
@@ -149,7 +151,9 @@ class Product(models.Model):
                         self.priced_at = existing_price_fields['priced_at']
                 else:
                     raise ValidationError(
-                        f"No market price found for {timezone.localdate()} matching commodity, variety, and market location."
+                        f"No market price found for {timezone.localdate()} matching "
+                        f"commodity='{self.commodity_type}', variety='{self.variety}', "
+                        f"location='{self.market_location}'."
                     )
 
         super().save(*args, **kwargs)

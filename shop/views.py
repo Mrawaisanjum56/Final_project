@@ -14,6 +14,8 @@ from .models import Product, Category, Order, OrderItem, Review
 from .forms import CustomUserCreationForm, ProductForm, CategoryForm, LoginForm, ReviewForm
 from .ml.quality import assess_wheat_quality
 
+ALLOWED_QUALITY_GRADES = {'A', 'B', 'C'}
+
 def send_order_email_async(subject, message, email_from, recipient_list):
     """Helper function to send email in a separate thread."""
     try:
@@ -301,7 +303,8 @@ def update_product(request, pk):
                     else:
                         updated_product.quality_grade = grade
                         updated_product.quality_confidence = confidence
-                        messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
+                        if grade in ALLOWED_QUALITY_GRADES:
+                            messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
                 elif not updated_product.is_wheat_commodity:
                     updated_product.quality_grade = None
                     updated_product.quality_confidence = None
@@ -362,7 +365,8 @@ def farmer_dashboard(request):
                         else:
                             product.quality_grade = grade
                             product.quality_confidence = confidence
-                            messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
+                            if grade in ALLOWED_QUALITY_GRADES:
+                                messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
                     else:
                         product.quality_grade = None
                         product.quality_confidence = None

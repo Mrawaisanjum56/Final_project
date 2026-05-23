@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -99,10 +100,15 @@ class ProductMarketPricingTests(TestCase):
             description='desc',
             stock=5,
         )
-        self.market_price.delete()
+        original_source_id = product.price_source_id
+        original_priced_at = product.priced_at
+        self.market_price.price_date = self.market_price.price_date - timedelta(days=1)
+        self.market_price.save(update_fields=['price_date'])
 
         product.price = Decimal('9000.00')
         product.save()
         product.refresh_from_db()
 
         self.assertEqual(product.price, Decimal('2750.00'))
+        self.assertEqual(product.price_source_id, original_source_id)
+        self.assertEqual(product.priced_at, original_priced_at)
