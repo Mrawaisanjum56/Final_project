@@ -82,7 +82,7 @@ class ProductMarketPricingTests(TestCase):
         product.save()
         product.refresh_from_db()
 
-        self.assertEqual(product.price, Decimal('2750.00'))
+        self.assertEqual(product.price, Decimal('2337.50'))
         self.assertEqual(product.quality_grade, 'B')
         self.assertEqual(product.quality_confidence, Decimal('65.00'))
 
@@ -136,6 +136,27 @@ class ProductMarketPricingTests(TestCase):
         self.assertEqual(payload['quality_grade'], 'A')
         self.assertEqual(payload['quality_confidence'], 96.5)
         self.assertEqual(payload['price'], '2750.00')
+
+    @patch('shop.views.assess_wheat_quality', return_value=('B', 88.2))
+    def test_analyze_product_listing_applies_grade_multiplier_for_wheat(self, _mock_quality):
+        self.client.login(username='seller1', password='pass12345')
+        image = SimpleUploadedFile('wheat.jpg', b'fake-image-content', content_type='image/jpeg')
+
+        response = self.client.post(
+            reverse('analyze_product_listing'),
+            {
+                'category': self.wheat.pk,
+                'variety': 'A1',
+                'market_location': 'Lahore',
+                'image': image,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['quality_grade'], 'B')
+        self.assertEqual(payload['quality_confidence'], 88.2)
+        self.assertEqual(payload['price'], '2337.50')
 
     def test_analyze_product_listing_requires_image_for_wheat(self):
         self.client.login(username='seller1', password='pass12345')

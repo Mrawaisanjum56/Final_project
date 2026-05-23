@@ -109,7 +109,7 @@
                 <div class="card border-0 shadow-sm dashboard-stat-card p-4" style="background: linear-gradient(135deg, #28a745 0%, #5dd479 100%);">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h3 class="display-4 font-weight-bold mb-0 text-white">${{ earnings|floatformat:2 }}</h3>
+                            <h3 class="display-4 font-weight-bold mb-0 text-white">PKR {{ earnings|floatformat:2 }}</h3>
                             <p class="mb-0 opacity-8">Total Earnings</p>
                         </div>
                         <i class="fas fa-hand-holding-usd fa-3x opacity-3"></i>
@@ -164,7 +164,7 @@
                                 {% endif %}
                                 {{ product.name }}
                             </td>
-                            <td>${{ product.price }}</td>
+                            <td>PKR {{ product.price }}</td>
                             <td>
                                 <span class="badge {% if product.stock < 10 %}badge-danger animate-pulse-red{% else %}badge-light text-dark{% endif %} p-2 px-3 rounded-pill shadow-sm">
                                     {{ product.stock }} in stock

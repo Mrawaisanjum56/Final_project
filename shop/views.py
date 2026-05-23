@@ -304,6 +304,7 @@ def update_product(request, pk):
                     else:
                         updated_product.quality_grade = grade
                         updated_product.quality_confidence = confidence
+                        updated_product.apply_quality_grade_price_adjustment()
                         if grade in ALLOWED_QUALITY_GRADES:
                             messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
                 elif not updated_product.is_wheat_commodity:
@@ -369,6 +370,8 @@ def analyze_product_listing(request):
             return JsonResponse({'error': 'Invalid image file. Please upload a valid image.'}, status=400)
         quality_grade = grade or ''
         quality_confidence = confidence if confidence is not None else ''
+        preview_product.quality_grade = quality_grade or None
+        preview_product.apply_quality_grade_price_adjustment()
 
     return JsonResponse(
         {
@@ -426,6 +429,7 @@ def farmer_dashboard(request):
                         else:
                             product.quality_grade = grade
                             product.quality_confidence = confidence
+                            product.apply_quality_grade_price_adjustment()
                             if grade in ALLOWED_QUALITY_GRADES:
                                 messages.info(request, f'Wheat quality: Grade {grade} ({confidence}%).')
                     else:
@@ -555,9 +559,9 @@ def place_order(request):
             
             message += "Items:\n"
             for item in order.items.all():
-                message += f"- {item.product.name}: {item.quantity} x ${item.price} = ${item.get_total}\n"
+                message += f"- {item.product.name}: {item.quantity} x PKR {item.price} = PKR {item.get_total}\n"
             
-            message += f"\nTotal Price (including ${settings.SHIPPING_COST} shipping): ${order.total_price}\n\n"
+            message += f"\nTotal Price (including PKR {settings.SHIPPING_COST} shipping): PKR {order.total_price}\n\n"
             message += f"Shipping Address:\n{address}\nPhone: {phone}\n\n"
             message += "Thank you for shopping with us!"
             
