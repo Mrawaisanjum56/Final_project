@@ -352,8 +352,11 @@ def analyze_product_listing(request):
 
     try:
         preview_product.apply_market_price(strict=True)
-    except ValidationError as exc:
-        return JsonResponse({'error': str(exc)}, status=400)
+    except ValidationError:
+        return JsonResponse(
+            {'error': 'No market price found for the selected category, variety, and location.'},
+            status=400,
+        )
 
     quality_grade = ''
     quality_confidence = ''
@@ -362,8 +365,8 @@ def analyze_product_listing(request):
             return JsonResponse({'error': 'Please choose an image to run the quality model.'}, status=400)
         try:
             grade, confidence = assess_wheat_quality(image)
-        except ValueError as exc:
-            return JsonResponse({'error': str(exc)}, status=400)
+        except ValueError:
+            return JsonResponse({'error': 'Invalid image file. Please upload a valid image.'}, status=400)
         quality_grade = grade or ''
         quality_confidence = confidence if confidence is not None else ''
 
