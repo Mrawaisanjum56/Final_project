@@ -50,7 +50,7 @@
 							{% endif %}
 						</div>
 						<h3>{{ product.name }}</h3>
-						<p class="product-price"><span>Stock: {{ product.stock }}</span> PKR {{ product.price }}</p>
+						<p class="product-price"><span>Per kg · Stock: {{ product.stock }} kg</span> PKR {{ product.price }}</p>
 						<a href="{% url 'add_to_cart' product.id %}" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
 					</div>
 				</div>
