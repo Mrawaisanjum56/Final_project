@@ -195,7 +195,10 @@ p:last-child {
 .loader-track::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: linear-gradient(90deg, rgba(242, 129, 35, 0), rgba(242, 129, 35, 0.95), rgba(242, 129, 35, 0));
   -webkit-animation: trackMove 1.4s linear infinite;
   animation: trackMove 1.4s linear infinite;
@@ -209,8 +212,13 @@ p:last-child {
   font-size: 48px;
   line-height: 1;
   text-shadow: 0 10px 18px rgba(5, 25, 34, 0.2);
-  -webkit-animation: tractorDrive 2s ease-in-out infinite, tractorBounce 0.4s ease-in-out infinite;
-  animation: tractorDrive 2s ease-in-out infinite, tractorBounce 0.4s ease-in-out infinite;
+  -webkit-animation: tractorDrive 2s ease-in-out infinite;
+  animation: tractorDrive 2s ease-in-out infinite;
+}
+
+.tractor-loader .fa-tractor {
+  -webkit-animation: tractorBounce 0.4s ease-in-out infinite;
+  animation: tractorBounce 0.4s ease-in-out infinite;
 }
 
 @-webkit-keyframes trackMove {
@@ -267,19 +275,23 @@ p:last-child {
 
 @-webkit-keyframes tractorBounce {
   0%, 100% {
-    margin-bottom: 0;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
   }
   50% {
-    margin-bottom: 4px;
+    -webkit-transform: translateY(-4px);
+    transform: translateY(-4px);
   }
 }
 
 @keyframes tractorBounce {
   0%, 100% {
-    margin-bottom: 0;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
   }
   50% {
-    margin-bottom: 4px;
+    -webkit-transform: translateY(-4px);
+    transform: translateY(-4px);
   }
 }
 
