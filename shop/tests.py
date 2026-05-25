@@ -211,6 +211,7 @@ class HomePageCategoryFilterTests(TestCase):
     def setUp(self):
         self.wheat = Category.objects.create(name='Wheat')
         self.rice = Category.objects.create(name='Rice')
+        self.maize = Category.objects.create(name='Maize')
         self.seller = CustomUser.objects.create_user(
             username='seller-home',
             password='pass12345',
@@ -252,15 +253,15 @@ class HomePageCategoryFilterTests(TestCase):
         for index in range(9):
             Product(
                 farmer=self.seller,
-                name=f'Extra Rice {index}',
-                category=self.rice,
+                name=f'Extra Maize {index}',
+                category=self.maize,
                 market_location='Lahore',
                 price=Decimal('18.00'),
                 description='desc',
                 stock=12,
             ).save(enforce_market_rules=False)
 
-    def test_home_shows_all_products_without_category_filter(self):
+    def test_home_shows_all_products(self):
         response = self.client.get(reverse('home'))
 
         self.assertEqual(response.status_code, 200)
