@@ -249,6 +249,30 @@ class HomePageCategoryFilterTests(TestCase):
         ]:
             product.save(enforce_market_rules=False)
 
+        for index in range(9):
+            Product(
+                farmer=self.seller,
+                name=f'Extra Rice {index}',
+                category=self.rice,
+                market_location='Lahore',
+                price=Decimal('18.00'),
+                description='desc',
+                stock=12,
+            ).save(enforce_market_rules=False)
+
+    def test_home_shows_all_products_without_category_filter(self):
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        products = list(response.context['products'])
+        self.assertEqual(len(products), Product.objects.count())
+
+    def test_home_shows_grade_tag_for_wheat_products(self):
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="product-grade-tag"', count=2)
+
     def test_home_filters_products_by_category(self):
         response = self.client.get(reverse('home'), {'category': 'rice'})
 

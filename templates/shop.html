@@ -48,6 +48,9 @@
 							{% else %}
 								<a href="{% url 'single-product' product.pk %}"><img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt=""></a>
 							{% endif %}
+							{% if product.is_wheat_commodity and product.quality_grade %}
+								<span class="product-grade-tag">Grade {{ product.quality_grade }}</span>
+							{% endif %}
 						</div>
 						<h3>{{ product.name }}</h3>
 						<p class="product-price"><span>Per kg · Stock: {{ product.stock }} kg</span> PKR {{ product.price }}</p>
