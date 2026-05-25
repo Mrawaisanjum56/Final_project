@@ -227,38 +227,41 @@ class HomePageCategoryFilterTests(TestCase):
             password='pass12345',
             user_type='seller',
         )
-        Product.objects.create(
-            farmer=seller,
-            name='Grade A Wheat',
-            category=self.wheat,
-            variety='A1',
-            market_location='Lahore',
-            price=Decimal('30.00'),
-            description='desc',
-            stock=10,
-            quality_grade='A',
-        )
-        Product.objects.create(
-            farmer=seller,
-            name='Grade B Wheat',
-            category=self.wheat,
-            variety='A1',
-            market_location='Lahore',
-            price=Decimal('25.00'),
-            description='desc',
-            stock=8,
-            quality_grade='B',
-        )
-        Product.objects.create(
-            farmer=seller,
-            name='Premium Rice',
-            category=self.rice,
-            variety='Super',
-            market_location='Lahore',
-            price=Decimal('18.00'),
-            description='desc',
-            stock=12,
-        )
+        for product in [
+            Product(
+                farmer=seller,
+                name='Grade A Wheat',
+                category=self.wheat,
+                variety='A1',
+                market_location='Lahore',
+                price=Decimal('30.00'),
+                description='desc',
+                stock=10,
+                quality_grade='A',
+            ),
+            Product(
+                farmer=seller,
+                name='Grade B Wheat',
+                category=self.wheat,
+                variety='A1',
+                market_location='Lahore',
+                price=Decimal('25.00'),
+                description='desc',
+                stock=8,
+                quality_grade='B',
+            ),
+            Product(
+                farmer=seller,
+                name='Premium Rice',
+                category=self.rice,
+                variety='Super',
+                market_location='Lahore',
+                price=Decimal('18.00'),
+                description='desc',
+                stock=12,
+            ),
+        ]:
+            product.save(enforce_market_rules=False)
 
     def test_home_filters_products_by_category(self):
         response = self.client.get(reverse('home'), {'category': 'rice'})
