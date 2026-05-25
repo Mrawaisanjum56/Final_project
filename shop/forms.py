@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser, Product, Category, Review
+from .models import CustomUser, Product, Category, Review, SellerReview
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -19,6 +19,8 @@ class CustomUserCreationForm(UserCreationForm):
                 'placeholder': f'Enter {field.label}',
                 'style': 'height: 50px;'
             })
+        self.fields['password1'].help_text = 'Password should include alphabets, special characters, and numbers.'
+        self.fields['password2'].help_text = ''
 
 class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
@@ -47,7 +49,7 @@ class CategoryForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'category', 'variety', 'market_location', 'description', 'stock', 'image']
+        fields = ['name', 'category', 'market_location', 'description', 'stock', 'image']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,6 +68,19 @@ class ProductForm(forms.ModelForm):
 class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
+        fields = ['rating', 'comment']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({
+                'class': 'form-control rounded-pill border-0 shadow-sm px-4 bg-light',
+            })
+
+
+class SellerReviewForm(forms.ModelForm):
+    class Meta:
+        model = SellerReview
         fields = ['rating', 'comment']
 
     def __init__(self, *args, **kwargs):

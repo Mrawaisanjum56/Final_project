@@ -50,12 +50,15 @@
 						<p class="single-product-pricing"><span>Per Kg</span> PKR {{ product.price }}</p>
 						<p>{{ product.description }}</p>
 						<p><strong>Available Stock:</strong> {{ product.stock }} kg</p>
+						{% if product.farmer %}
+						<p><strong>Seller:</strong> <a href="{% url 'seller_profile' product.farmer.id %}" class="orange-text">{{ product.farmer.username }}</a></p>
+						{% endif %}
 						<div class="single-product-form">
 							<form action="{% url 'add_to_cart' product.id %}" method="POST">
 								{% csrf_token %}
 								<input type="number" name="quantity" placeholder="1" value="1" min="1" max="{{ product.stock }}">
 								<small class="d-block mb-3">Enter quantity in kg.</small>
-								<button type="submit" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+								<button type="submit" class="cart-btn single-add-to-cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
 							</form>
 							<p><strong>Categories: </strong>{{ product.category.name }}</p>
 						</div>

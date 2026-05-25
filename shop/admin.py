@@ -1,17 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Product, CustomUser, Order, OrderItem, Category, MarketPrice
+from .models import Product, CustomUser, Order, OrderItem, Category, MarketPrice, SellerReview
 
 admin.site.register(Category)
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
-        'name', 'category', 'market_location', 'variety',
+        'name', 'category', 'market_location',
         'price', 'quality_grade', 'quality_confidence',
         'stock', 'farmer', 'created_at'
     )
     list_filter = ('category', 'market_location', 'created_at')
-    search_fields = ('name', 'market_location', 'variety')
+    search_fields = ('name', 'market_location')
 
     def get_readonly_fields(self, request, obj=None):
         base_fields = (
@@ -38,9 +38,9 @@ admin.site.register(Product, ProductAdmin)
 
 @admin.register(MarketPrice)
 class MarketPriceAdmin(admin.ModelAdmin):
-    list_display = ('price_date', 'commodity_type', 'variety', 'market_location', 'region', 'unit', 'price', 'source', 'scraped_at')
-    list_filter = ('price_date', 'commodity_type', 'market_location', 'region', 'source')
-    search_fields = ('commodity_type', 'variety', 'market_location', 'region')
+    list_display = ('price_date', 'commodity_type', 'market_location', 'unit', 'price', 'source', 'scraped_at')
+    list_filter = ('price_date', 'commodity_type', 'market_location', 'source')
+    search_fields = ('commodity_type', 'market_location')
 
     class Media:
         css = {'all': ('shop/admin_theme.css',)}
@@ -85,3 +85,10 @@ class OrderAdmin(admin.ModelAdmin):
         css = {'all': ('shop/admin_theme.css',)}
 
 admin.site.register(Order, OrderAdmin)
+
+
+@admin.register(SellerReview)
+class SellerReviewAdmin(admin.ModelAdmin):
+    list_display = ('seller', 'reviewer', 'rating', 'created_at')
+    list_filter = ('rating', 'created_at')
+    search_fields = ('seller__username', 'reviewer__username')

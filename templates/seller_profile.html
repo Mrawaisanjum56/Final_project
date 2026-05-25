@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Seller Profile{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-section breadcrumb-bg">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2 text-center">
+                <div class="breadcrumb-text">
+                    <p>Seller Information</p>
+                    <h1>{{ seller.username }}</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-120 mb-120">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                <h4 class="mb-2">Seller Rating</h4>
+                <p class="mb-0">Average: {{ average_seller_rating|floatformat:1 }}/5 ({{ reviews.count }} reviews)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <h4 class="mb-3">Products by {{ seller.username }}</h4>
+            <div class="row">
+                {% for product in products %}
+                <div class="col-md-4 mb-3">
+                    <div class="single-product-item h-100">
+                        <div class="product-image">
+                            <a href="{% url 'single-product' product.id %}">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                                {% else %}
+                                <img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt="">
+                                {% endif %}
+                            </a>
+                        </div>
+                        <h3>{{ product.name }}</h3>
+                        <p class="product-price"><span>Per Kg</span>PKR {{ product.price }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-md-12">
+                    <p class="text-muted">No products listed by this seller yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h4 class="mb-3">Buyer Feedback</h4>
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+                {% for review in reviews %}
+                <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>{{ review.reviewer.username }}</strong>
+                        <small class="text-muted">{{ review.created_at|date:"d M, Y" }}</small>
+                    </div>
+                    <div class="mb-1">
+                        {% with ''|center:5 as range %}
+                        {% for _ in range %}
+                            <i class="fa{% if forloop.counter <= review.rating %}s{% else %}r{% endif %} fa-star text-warning small"></i>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <p class="mb-0">{{ review.comment }}</p>
+                </div>
+                {% empty %}
+                <p class="mb-0 text-muted">No feedback yet.</p>
+                {% endfor %}
+            </div>
+
+            {% if user.is_authenticated and user.user_type == 'buyer' %}
+            <h4 class="mb-3">Leave Feedback for Seller</h4>
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="small font-weight-bold">Rating</label>
+                            {{ form.rating }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="small font-weight-bold">Feedback</label>
+                            {{ form.comment }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn boxed-btn rounded-pill px-5">Submit Feedback</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

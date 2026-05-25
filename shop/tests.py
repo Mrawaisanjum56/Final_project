@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .forms import ProductForm
-from .models import Category, CustomUser, MarketPrice, Product
+from .models import Category, CustomUser, MarketPrice, Product, SellerReview
 
 
 class ProductMarketPricingTests(TestCase):
@@ -24,7 +24,6 @@ class ProductMarketPricingTests(TestCase):
         self.market_price = MarketPrice.objects.create(
             price_date=timezone.localdate(),
             commodity_type='Wheat',
-            variety='A1',
             market_location='Lahore',
             price=Decimal('2750.00'),
         )
@@ -34,7 +33,6 @@ class ProductMarketPricingTests(TestCase):
             farmer=self.seller,
             name='Sample Wheat',
             category=self.wheat,
-            variety='A1',
             market_location='Lahore',
             price=Decimal('1.00'),
             description='desc',
@@ -56,7 +54,6 @@ class ProductMarketPricingTests(TestCase):
             farmer=self.seller,
             name='Other Wheat',
             category=self.wheat,
-            variety='B2',
             market_location='Karachi',
             price=Decimal('1.00'),
             description='desc',
@@ -71,7 +68,6 @@ class ProductMarketPricingTests(TestCase):
             farmer=self.seller,
             name='Locked Wheat',
             category=self.wheat,
-            variety='A1',
             market_location='Lahore',
             price=Decimal('100.00'),
             description='desc',
@@ -101,7 +97,6 @@ class ProductMarketPricingTests(TestCase):
             farmer=self.seller,
             name='Stored Wheat',
             category=self.wheat,
-            variety='A1',
             market_location='Lahore',
             price=Decimal('100.00'),
             description='desc',
@@ -129,7 +124,6 @@ class ProductMarketPricingTests(TestCase):
             reverse('analyze_product_listing'),
             {
                 'category': self.wheat.pk,
-                'variety': 'A1',
                 'market_location': 'Lahore',
                 'image': image,
             },
@@ -150,7 +144,6 @@ class ProductMarketPricingTests(TestCase):
             reverse('analyze_product_listing'),
             {
                 'category': self.wheat.pk,
-                'variety': 'A1',
                 'market_location': 'Lahore',
                 'image': image,
             },
@@ -169,7 +162,6 @@ class ProductMarketPricingTests(TestCase):
             reverse('analyze_product_listing'),
             {
                 'category': self.wheat.pk,
-                'variety': 'A1',
                 'market_location': 'Lahore',
             },
         )
@@ -198,7 +190,6 @@ class ScraperFallbackTests(TestCase):
         MarketPrice.objects.create(
             price_date=target_date - timedelta(days=1),
             commodity_type='Wheat',
-            variety='',
             market_location='Lahore',
             price=Decimal('2800.00'),
         )
@@ -212,7 +203,6 @@ class ScraperFallbackTests(TestCase):
         today_wheat = MarketPrice.objects.get(
             price_date=target_date,
             commodity_type='Wheat',
-            variety='',
             market_location='Lahore',
         )
         self.assertEqual(today_wheat.price, Decimal('2800.00'))
@@ -222,17 +212,16 @@ class HomePageCategoryFilterTests(TestCase):
     def setUp(self):
         self.wheat = Category.objects.create(name='Wheat')
         self.rice = Category.objects.create(name='Rice')
-        seller = CustomUser.objects.create_user(
+        self.seller = CustomUser.objects.create_user(
             username='seller-home',
             password='pass12345',
             user_type='seller',
         )
         for product in [
             Product(
-                farmer=seller,
+                farmer=self.seller,
                 name='Grade A Wheat',
                 category=self.wheat,
-                variety='A1',
                 market_location='Lahore',
                 price=Decimal('30.00'),
                 description='desc',
@@ -240,10 +229,9 @@ class HomePageCategoryFilterTests(TestCase):
                 quality_grade='A',
             ),
             Product(
-                farmer=seller,
+                farmer=self.seller,
                 name='Grade B Wheat',
                 category=self.wheat,
-                variety='A1',
                 market_location='Lahore',
                 price=Decimal('25.00'),
                 description='desc',
@@ -251,10 +239,9 @@ class HomePageCategoryFilterTests(TestCase):
                 quality_grade='B',
             ),
             Product(
-                farmer=seller,
+                farmer=self.seller,
                 name='Premium Rice',
                 category=self.rice,
-                variety='Super',
                 market_location='Lahore',
                 price=Decimal('18.00'),
                 description='desc',
@@ -278,3 +265,52 @@ class HomePageCategoryFilterTests(TestCase):
         products = list(response.context['products'])
         self.assertEqual(len(products), 1)
         self.assertEqual(products[0].name, 'Grade B Wheat')
+
+    def test_product_refreshes_price_after_two_hours(self):
+        product = Product.objects.create(
+            farmer=self.seller,
+            name='Old Wheat Price',
+            category=self.wheat,
+            market_location='Lahore',
+            price=Decimal('10.00'),
+            description='desc',
+            stock=5,
+        )
+        product.priced_at = timezone.now() - timedelta(hours=3)
+        product.save(update_fields=['priced_at'], enforce_market_rules=False)
+
+        self.client.get(reverse('home'))
+        product.refresh_from_db()
+
+        self.assertEqual(product.price, Decimal('27.50'))
+
+
+class SellerProfileReviewTests(TestCase):
+    def setUp(self):
+        self.seller = CustomUser.objects.create_user(
+            username='seller-profile',
+            password='pass12345',
+            user_type='seller',
+        )
+        self.buyer = CustomUser.objects.create_user(
+            username='buyer-profile',
+            password='pass12345',
+            user_type='buyer',
+        )
+
+    def test_buyer_can_submit_seller_review(self):
+        self.client.login(username='buyer-profile', password='pass12345')
+        response = self.client.post(
+            reverse('seller_profile', kwargs={'seller_id': self.seller.id}),
+            {'rating': 4, 'comment': 'Good seller.'},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            SellerReview.objects.filter(
+                seller=self.seller,
+                reviewer=self.buyer,
+                rating=4,
+            ).exists()
+        )

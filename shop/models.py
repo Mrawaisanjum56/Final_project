@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db import models
@@ -45,9 +46,7 @@ class Category(models.Model):
 class MarketPrice(models.Model):
     price_date = models.DateField(db_index=True)
     commodity_type = models.CharField(max_length=80, db_index=True)
-    variety = models.CharField(max_length=120, blank=True, default='', db_index=True)
     market_location = models.CharField(max_length=120, db_index=True)
-    region = models.CharField(max_length=120, blank=True, default='')
     unit = models.CharField(max_length=40, blank=True, default='')
     price = models.DecimalField(max_digits=12, decimal_places=2)
     source = models.CharField(max_length=120, default='amis.pk')
@@ -56,11 +55,11 @@ class MarketPrice(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['price_date', 'commodity_type', 'variety', 'market_location'],
-                name='uniq_marketprice_day_commodity_variety_location',
+                fields=['price_date', 'commodity_type', 'market_location'],
+                name='uniq_marketprice_day_commodity_location',
             )
         ]
-        ordering = ['-price_date', 'commodity_type', 'variety', 'market_location']
+        ordering = ['-price_date', 'commodity_type', 'market_location']
 
     @property
     def uses_100kg_unit(self):
@@ -88,7 +87,6 @@ class Product(models.Model):
     farmer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
     name = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
-    variety = models.CharField(max_length=120, blank=True, default='')
     market_location = models.CharField(max_length=120, blank=True, default='')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
@@ -111,22 +109,26 @@ class Product(models.Model):
     def _price_queryset(self, on_date):
         commodity = self.commodity_type
         location = (self.market_location or '').strip()
-        variety = (self.variety or '').strip()
         if not commodity or not location:
             return MarketPrice.objects.none()
 
-        qs = MarketPrice.objects.filter(
+        return MarketPrice.objects.filter(
             price_date=on_date,
             commodity_type__iexact=commodity,
             market_location__iexact=location,
         )
-        if variety:
-            return qs.filter(variety__iexact=variety)
-        return qs.filter(variety='')
 
     def get_market_price(self, on_date=None):
         on_date = on_date or timezone.localdate()
-        return self._price_queryset(on_date).order_by('-scraped_at').first()
+        today_match = self._price_queryset(on_date).order_by('-scraped_at').first()
+        if today_match:
+            return today_match
+
+        return MarketPrice.objects.filter(
+            commodity_type__iexact=self.commodity_type,
+            market_location__iexact=(self.market_location or '').strip(),
+            price_date__lt=on_date,
+        ).order_by('-price_date', '-scraped_at').first()
 
     def apply_market_price(self, on_date=None, strict=False):
         target_date = on_date or timezone.localdate()
@@ -135,8 +137,7 @@ class Product(models.Model):
             if strict:
                 raise ValidationError(
                     f"No market price found for {target_date} matching "
-                    f"commodity='{self.commodity_type}', variety='{self.variety}', "
-                    f"location='{self.market_location}'."
+                    f"commodity='{self.commodity_type}', location='{self.market_location}'."
                 )
             return None
 
@@ -181,8 +182,7 @@ class Product(models.Model):
                 else:
                     raise ValidationError(
                         f"No market price found for {timezone.localdate()} matching "
-                        f"commodity='{self.commodity_type}', variety='{self.variety}', "
-                        f"location='{self.market_location}'."
+                        f"commodity='{self.commodity_type}', location='{self.market_location}'."
                     )
             else:
                 self.apply_quality_grade_price_adjustment()
@@ -199,6 +199,35 @@ class Product(models.Model):
 
     def _should_enforce_market_rules(self, enforce_market_rules, allow_admin_override):
         return enforce_market_rules and bool(self.farmer_id) and not allow_admin_override
+
+    def should_refresh_price(self, *, refresh_interval=timedelta(hours=2)):
+        now = timezone.now()
+        today_latest = self._price_queryset(timezone.localdate()).order_by('-scraped_at').first()
+        if today_latest and (self.price_source_id != today_latest.id):
+            return True
+
+        if self.priced_at is None:
+            return bool(self.get_market_price())
+        if now - self.priced_at >= refresh_interval:
+            return bool(self.get_market_price())
+        return False
+
+    def refresh_market_price_if_due(self, *, refresh_interval=timedelta(hours=2)):
+        if not self.should_refresh_price(refresh_interval=refresh_interval):
+            return False
+
+        matched_price = self.apply_market_price(strict=False)
+        if matched_price is None:
+            return False
+
+        if self.is_wheat_commodity:
+            self.apply_quality_grade_price_adjustment()
+
+        self.save(
+            update_fields=['price', 'price_source', 'priced_at'],
+            enforce_market_rules=False,
+        )
+        return True
 
     @property
     def average_rating(self):
@@ -269,3 +298,30 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.product.name} ({self.rating})"
+
+
+class SellerReview(models.Model):
+    seller = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='received_seller_reviews',
+    )
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='given_seller_reviews',
+    )
+    rating = models.PositiveSmallIntegerField(default=5, choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('seller', 'reviewer')
+        ordering = ('-created_at',)
+
+    def clean(self):
+        if self.seller_id and self.seller.user_type != 'seller':
+            raise ValidationError('Feedback can only be given to seller accounts.')
+
+    def __str__(self):
+        return f"{self.reviewer.username} -> {self.seller.username} ({self.rating})"

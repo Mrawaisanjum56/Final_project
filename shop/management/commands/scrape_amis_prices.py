@@ -173,10 +173,8 @@ class Command(BaseCommand):
             MarketPrice.objects.update_or_create(
                 price_date=price_date,
                 commodity_type=commodity_type,
-                variety="",  # you can extend later if you parse variety
                 market_location=picked_market or "Unknown",
                 defaults={
-                    "region": "",
                     "unit": picked_unit,
                     "price": picked_price,
                     "source": "amis.pk",

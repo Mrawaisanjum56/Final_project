@@ -13,11 +13,6 @@
     {% for error in form.category.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
 </div>
 <div class="form-group">
-    <label for="{{ form.variety.id_for_label }}">{{ form.variety.label }}</label>
-    {{ form.variety }}
-    {% for error in form.variety.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-</div>
-<div class="form-group">
     <label for="{{ form.market_location.id_for_label }}">{{ form.market_location.label }}</label>
     {{ form.market_location }}
     {% for error in form.market_location.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
@@ -112,7 +107,6 @@
             const buttonLabel = button.querySelector('.js-run-model-label');
             const imageField = form.querySelector('[name="image"]');
             const categoryField = form.querySelector('[name="category"]');
-            const varietyField = form.querySelector('[name="variety"]');
             const locationField = form.querySelector('[name="market_location"]');
 
             if (errorBox) {
@@ -124,7 +118,6 @@
 
             const payload = new FormData();
             payload.append('category', categoryField ? categoryField.value : '');
-            payload.append('variety', varietyField ? varietyField.value : '');
             payload.append('market_location', locationField ? locationField.value : '');
             if (imageField && imageField.files && imageField.files[0]) {
                 payload.append('image', imageField.files[0]);
