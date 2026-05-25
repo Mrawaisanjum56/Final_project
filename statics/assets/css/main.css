@@ -1422,7 +1422,7 @@ a.mobile-show.search-bar-icon:hover {
 
 ----------------------------------------------------------------------------- */
 .hero-bg {
-  background-image: var(--hero-bg-image, url('..img/hero-bg-2.jpg'));
+  background-image: var(--hero-bg-image, url('../img/hero-bg.jpg'));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
