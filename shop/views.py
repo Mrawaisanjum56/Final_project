@@ -1,6 +1,6 @@
 import threading
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Q, Sum, F
+from django.db.models import Q, Sum, F, Avg
 from django.urls import reverse
 from django.http import JsonResponse
 from django.contrib.auth import login, logout
@@ -11,11 +11,24 @@ from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
-from .models import Product, Category, Order, OrderItem, Review
-from .forms import CustomUserCreationForm, ProductForm, CategoryForm, LoginForm, ReviewForm
+from .models import Product, Category, Order, OrderItem, Review, SellerReview, CustomUser
+from .forms import (
+    CustomUserCreationForm,
+    ProductForm,
+    CategoryForm,
+    LoginForm,
+    ReviewForm,
+    SellerReviewForm,
+)
 from .ml.quality import assess_wheat_quality
 
 ALLOWED_QUALITY_GRADES = {'A', 'B', 'C'}
+
+
+def _refresh_listed_product_prices(products):
+    for product in products:
+        product.refresh_market_price_if_due()
+
 
 def _get_selling_categories():
     return Category.objects.filter(products__isnull=False).distinct().order_by('name')
@@ -44,7 +57,8 @@ def home(request):
     if selected_grade not in ALLOWED_QUALITY_GRADES:
         selected_grade = ''
 
-    products = _filter_products(products, selected_category, selected_grade)[:8]
+    products = list(_filter_products(products, selected_category, selected_grade)[:8])
+    _refresh_listed_product_prices(products)
     categories = _get_selling_categories()
     return render(request, 'index.html', {
         'products': products,
@@ -79,6 +93,8 @@ def shop(request):
         products = products.filter(price__gte=min_price)
     if max_price:
         products = products.filter(price__lte=max_price)
+    products = list(products)
+    _refresh_listed_product_prices(products)
     
     context = {
         'products': products,
@@ -110,7 +126,8 @@ def single_news(request):
     return render(request, 'single-news.html')
 
 def index_2(request):
-    products = Product.objects.all()[:8]
+    products = list(Product.objects.all()[:8])
+    _refresh_listed_product_prices(products)
     return render(request, 'index_2.html', {'products': products})
 
 def error_404(request):
@@ -118,6 +135,7 @@ def error_404(request):
 
 def single_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
+    product.refresh_market_price_if_due()
     reviews = product.reviews.all().order_by('-created_at')
     
     # Rating submit karne ka logic
@@ -137,7 +155,8 @@ def single_product(request, pk):
     else:
         form = ReviewForm()
 
-    products = Product.objects.exclude(pk=pk)[:4]
+    products = list(Product.objects.exclude(pk=pk)[:4])
+    _refresh_listed_product_prices(products)
     context = {
         'product': product, 
         'products': products,
@@ -176,11 +195,14 @@ class GuestOrder:
 def cart(request):
     if request.user.is_authenticated:
         order = Order.objects.filter(customer=request.user, is_paid=False).first()
+        if order:
+            _refresh_listed_product_prices([item.product for item in order.items.select_related('product')])
     else:
         cart_data = request.session.get('cart', {})
         items = []
         total = 0
         products = Product.objects.filter(id__in=cart_data.keys())
+        _refresh_listed_product_prices(products)
         for product in products:
             qty = cart_data.get(str(product.id))
             item = GuestOrderItem(product, qty)
@@ -250,6 +272,7 @@ def logout_view(request):
 
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
+    product.refresh_market_price_if_due()
     
     quantity = 1
     if request.method == 'POST':
@@ -352,7 +375,6 @@ def analyze_product_listing(request):
         raise PermissionDenied
 
     category_id = request.POST.get('category')
-    variety = (request.POST.get('variety') or '').strip()
     market_location = (request.POST.get('market_location') or '').strip()
     image = request.FILES.get('image')
 
@@ -369,7 +391,6 @@ def analyze_product_listing(request):
         farmer=request.user,
         name='Preview Product',
         category=category,
-        variety=variety,
         market_location=market_location,
         price=0,
         description='Preview',
@@ -380,7 +401,7 @@ def analyze_product_listing(request):
         preview_product.apply_market_price(strict=True)
     except ValidationError:
         return JsonResponse(
-            {'error': 'No market price found for the selected category, variety, and location.'},
+            {'error': 'No market price found for the selected category and location.'},
             status=400,
         )
 
@@ -410,7 +431,8 @@ def farmer_dashboard(request):
     if not request.user.is_seller:
         raise PermissionDenied # Unauthorized users ko error dikhayein
     
-    products = Product.objects.filter(farmer=request.user)
+    products = list(Product.objects.filter(farmer=request.user))
+    _refresh_listed_product_prices(products)
     
     seller_orders = Order.objects.filter(
         items__product__farmer=request.user, 
@@ -474,6 +496,38 @@ def farmer_dashboard(request):
         'status_choices': Order.STATUS_CHOICES,
     }
     return render(request, 'farmer_dashboard.html', context)
+
+
+def seller_profile(request, seller_id):
+    seller = get_object_or_404(CustomUser, pk=seller_id, user_type='seller')
+    products = list(Product.objects.filter(farmer=seller).select_related('category'))
+    _refresh_listed_product_prices(products)
+    reviews = SellerReview.objects.filter(seller=seller).select_related('reviewer')
+
+    if request.method == 'POST' and request.user.is_authenticated and request.user.user_type == 'buyer':
+        form = SellerReviewForm(request.POST)
+        if form.is_valid():
+            if SellerReview.objects.filter(seller=seller, reviewer=request.user).exists():
+                messages.warning(request, 'You have already reviewed this seller.')
+            else:
+                seller_review = form.save(commit=False)
+                seller_review.seller = seller
+                seller_review.reviewer = request.user
+                seller_review.save()
+                messages.success(request, 'Thank you for reviewing this seller.')
+            return redirect('seller_profile', seller_id=seller.id)
+    else:
+        form = SellerReviewForm()
+
+    average_seller_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
+    context = {
+        'seller': seller,
+        'products': products,
+        'reviews': reviews,
+        'form': form,
+        'average_seller_rating': average_seller_rating,
+    }
+    return render(request, 'seller_profile.html', context)
 
 @login_required
 def delete_product(request, pk):

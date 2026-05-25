@@ -402,14 +402,17 @@ p:last-child {
   background-color: #162133;
 }
 
+.boxed-btn,
 a.boxed-btn {
   font-family: 'Poppins', sans-serif;
   display: inline-block;
   background-color: #F28123;
   color: #fff;
   padding: 10px 20px;
+  border: 0;
 }
 
+.bordered-btn,
 a.bordered-btn {
   font-family: 'Poppins', sans-serif;
   display: inline-block;
@@ -432,6 +435,7 @@ a.read-more-btn:hover {
   color: #F28123;
 }
 
+.boxed-btn, .bordered-btn, .cart-btn,
 a.boxed-btn, a.bordered-btn, a.cart-btn {
   border-radius: 50px;
 }
@@ -1029,6 +1033,23 @@ input[type="button"]:hover {
   transform: translateY(-2px);
   -webkit-box-shadow: 0 10px 24px rgba(5, 25, 34, 0.12);
   box-shadow: 0 10px 24px rgba(5, 25, 34, 0.12);
+}
+
+button:active,
+.btn:active,
+a.boxed-btn:active,
+a.bordered-btn:active,
+a.cart-btn:active,
+a.read-more-btn:active,
+input[type="submit"]:active,
+input[type="button"]:active {
+  -webkit-transform: translateY(0);
+  transform: translateY(0);
+  background-color: #051922;
+  color: #F28123;
+  border-color: #051922;
+  -webkit-box-shadow: 0 4px 12px rgba(5, 25, 34, 0.2);
+  box-shadow: 0 4px 12px rgba(5, 25, 34, 0.2);
 }
 
 button:disabled:hover,
@@ -2591,6 +2612,25 @@ input[type="number"] {
 
 .single-product-form a.cart-btn {
   margin-bottom: 15px;
+}
+
+.single-product-form .single-add-to-cart-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #F28123, #ff9b47);
+  color: #fff;
+}
+
+.single-product-form .single-add-to-cart-btn:hover {
+  background: linear-gradient(135deg, #051922, #0f3347);
+  color: #F28123;
+}
+
+.single-product-form .single-add-to-cart-btn:active {
+  background: linear-gradient(135deg, #031017, #061f2d);
+  color: #f9ad69;
 }
 
 .single-product-content h4 {
