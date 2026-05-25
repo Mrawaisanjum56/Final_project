@@ -433,6 +433,7 @@ def farmer_dashboard(request):
     
     products = list(Product.objects.filter(farmer=request.user))
     _refresh_listed_product_prices(products)
+    active_products_count = sum(1 for product in products if product.stock > 0)
     
     seller_orders = Order.objects.filter(
         items__product__farmer=request.user, 
@@ -489,6 +490,7 @@ def farmer_dashboard(request):
         
     context = {
         'products': products, 
+        'active_products_count': active_products_count,
         'earnings': earnings,
         'form': product_form, 
         'category_form': category_form,

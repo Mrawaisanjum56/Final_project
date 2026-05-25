@@ -320,3 +320,42 @@ class SellerProfileReviewTests(TestCase):
                 rating=4,
             ).exists()
         )
+
+
+class FarmerDashboardStatsTests(TestCase):
+    def setUp(self):
+        self.seller = CustomUser.objects.create_user(
+            username='seller-dashboard',
+            password='pass12345',
+            user_type='seller',
+        )
+        self.category = Category.objects.create(name='Rice')
+
+    def test_active_products_count_only_includes_in_stock_items(self):
+        active_product = Product(
+            farmer=self.seller,
+            name='Active Product',
+            category=self.category,
+            market_location='Lahore',
+            price=Decimal('10.00'),
+            description='desc',
+            stock=5,
+        )
+        active_product.save(enforce_market_rules=False)
+
+        inactive_product = Product(
+            farmer=self.seller,
+            name='Inactive Product',
+            category=self.category,
+            market_location='Lahore',
+            price=Decimal('8.00'),
+            description='desc',
+            stock=0,
+        )
+        inactive_product.save(enforce_market_rules=False)
+
+        self.client.login(username='seller-dashboard', password='pass12345')
+        response = self.client.get(reverse('farmer_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['active_products_count'], 1)
