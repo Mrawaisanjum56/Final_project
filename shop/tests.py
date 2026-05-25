@@ -102,7 +102,6 @@ class ProductMarketPricingTests(TestCase):
             description='desc',
             stock=5,
         )
-        original_source_id = product.price_source_id
         original_priced_at = product.priced_at
         self.market_price.price_date = self.market_price.price_date - timedelta(days=1)
         self.market_price.save(update_fields=['price_date'])
@@ -112,8 +111,8 @@ class ProductMarketPricingTests(TestCase):
         product.refresh_from_db()
 
         self.assertEqual(product.price, Decimal('27.50'))
-        self.assertEqual(product.price_source_id, original_source_id)
-        self.assertEqual(product.priced_at, original_priced_at)
+        self.assertEqual(product.price_source.price_date, timezone.localdate() - timedelta(days=1))
+        self.assertNotEqual(product.priced_at, original_priced_at)
 
     @patch('shop.views.assess_wheat_quality', return_value=('A', 96.5))
     def test_analyze_product_listing_returns_quality_and_price(self, _mock_quality):
@@ -267,6 +266,12 @@ class HomePageCategoryFilterTests(TestCase):
         self.assertEqual(products[0].name, 'Grade B Wheat')
 
     def test_product_refreshes_price_after_two_hours(self):
+        market_price = MarketPrice.objects.create(
+            price_date=timezone.localdate(),
+            commodity_type='Wheat',
+            market_location='Lahore',
+            price=Decimal('2750.00'),
+        )
         product = Product.objects.create(
             farmer=self.seller,
             name='Old Wheat Price',
@@ -283,6 +288,7 @@ class HomePageCategoryFilterTests(TestCase):
         product.refresh_from_db()
 
         self.assertEqual(product.price, Decimal('27.50'))
+        self.assertEqual(product.price_source_id, market_price.id)
 
 
 class SellerProfileReviewTests(TestCase):
