@@ -1595,15 +1595,15 @@ input[type="submit"] {
 }
 
 .homepage-bg-1 {
-  background-image: url(../img/hero-bg.jpg);
+  background-image: url('https://github.com/user-attachments/assets/7f8dfc2c-fb7e-4f1c-a8a8-9cfa3a69eed5');
 }
 
 .homepage-bg-2 {
-  background-image: url(../img/hero-bg-2.jpg);
+  background-image: url('https://github.com/user-attachments/assets/7f8dfc2c-fb7e-4f1c-a8a8-9cfa3a69eed5');
 }
 
 .homepage-bg-3 {
-  background-image: url(../img/hero-bg-3.jpg);
+  background-image: url('https://github.com/user-attachments/assets/7f8dfc2c-fb7e-4f1c-a8a8-9cfa3a69eed5');
 }
 
 .homepage-slider {
