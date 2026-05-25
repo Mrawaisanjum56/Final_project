@@ -3,7 +3,11 @@
 
 {% block content %}
 	<!-- hero area -->
+<<<<<<< Updated upstream
 	<div class="hero-area hero-bg" style="--hero-bg-image: url('{% static "assets/img/hero-bg.jpg" %}');">
+=======
+	<div class="hero-area hero-bg" style="--hero-bg-image: url('./statics/assets/img/hero-bg.jpg');">
+>>>>>>> Stashed changes
 		<div class="container">
 			<div class="row">
 				<div class="col-lg-9 offset-lg-2 text-center">
@@ -123,9 +127,6 @@
 								<img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt="">
 								{% endif %}
 							</a>
-							{% if product.is_wheat_commodity and product.quality_grade %}
-							<span class="product-grade-tag">Grade {{ product.quality_grade }}</span>
-							{% endif %}
 						</div>
 						<h3>{{ product.name }}</h3>
 						<p class="product-price"><span>Per kg · Stock: {{ product.stock }} kg</span> PKR {{ product.price }}</p>
