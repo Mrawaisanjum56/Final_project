@@ -57,7 +57,7 @@ def home(request):
     if selected_grade not in ALLOWED_QUALITY_GRADES:
         selected_grade = ''
 
-    products = list(_filter_products(products, selected_category, selected_grade)[:8])
+    products = list(_filter_products(products, selected_category, selected_grade))
     _refresh_listed_product_prices(products)
     categories = _get_selling_categories()
     return render(request, 'index.html', {
