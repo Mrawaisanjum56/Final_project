@@ -1415,10 +1415,11 @@ a.mobile-show.search-bar-icon:hover {
 
 ----------------------------------------------------------------------------- */
 .hero-bg {
-  background-image: url(../img/hero-bg.jpg);
+  background-image: var(--hero-bg-image, url(../img/hero-bg.jpg));
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
 }
 
 .hero-text {
@@ -1432,6 +1433,7 @@ a.mobile-show.search-bar-icon:hover {
 
 .hero-area {
   height: 100%;
+  min-height: 100vh;
   position: relative;
   z-index: 1;
 }
