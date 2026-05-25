@@ -177,96 +177,121 @@ p:last-child {
   -ms-transform: translate(-50%, -50%);
   -o-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  height: 50px;
-  width: 50px;
+  width: 180px;
+  height: 90px;
 }
 
-.circle {
-  width: 8vmax;
-  height: 8vmax;
-  border-right: 4px solid #000;
-  border-radius: 50%;
-  -webkit-animation: spinRight 800ms linear infinite;
-  animation: spinRight 800ms linear infinite;
-}
-
-.circle:before {
-  content: '';
-  width: 6vmax;
-  height: 6vmax;
-  display: block;
+.loader-track {
   position: absolute;
-  top: calc(50% - 3vmax);
-  left: calc(50% - 3vmax);
-  border-left: 3px solid #F28123;
-  border-radius: 100%;
-  -webkit-animation: spinLeft 800ms linear infinite;
-  animation: spinLeft 800ms linear infinite;
+  left: 0;
+  bottom: 8px;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(5, 25, 34, 0.15);
+  overflow: hidden;
 }
 
-.circle:after {
-  content: '';
-  width: 6vmax;
-  height: 6vmax;
-  display: block;
+.loader-track::after {
+  content: "";
   position: absolute;
-  top: calc(50% - 3vmax);
-  left: calc(50% - 3vmax);
-  border-left: 3px solid #F28123;
-  border-radius: 100%;
-  -webkit-animation: spinLeft 800ms linear infinite;
-  animation: spinLeft 800ms linear infinite;
-  width: 4vmax;
-  height: 4vmax;
-  top: calc(50% - 2vmax);
-  left: calc(50% - 2vmax);
-  border: 0;
-  border-right: 2px solid #000;
-  -webkit-animation: none;
-  animation: none;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg, rgba(242, 129, 35, 0), rgba(242, 129, 35, 0.95), rgba(242, 129, 35, 0));
+  -webkit-animation: trackMove 1.4s linear infinite;
+  animation: trackMove 1.4s linear infinite;
 }
 
-@-webkit-keyframes spinLeft {
-  from {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  to {
-    -webkit-transform: rotate(720deg);
-    transform: rotate(720deg);
-  }
+.tractor-loader {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  color: #F28123;
+  font-size: 48px;
+  line-height: 1;
+  text-shadow: 0 10px 18px rgba(5, 25, 34, 0.2);
+  -webkit-animation: tractorDrive 2s ease-in-out infinite;
+  animation: tractorDrive 2s ease-in-out infinite;
 }
 
-@keyframes spinLeft {
-  from {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  to {
-    -webkit-transform: rotate(720deg);
-    transform: rotate(720deg);
-  }
+.tractor-loader .fa-tractor {
+  -webkit-animation: tractorBounce 0.4s ease-in-out infinite;
+  animation: tractorBounce 0.4s ease-in-out infinite;
 }
 
-@-webkit-keyframes spinRight {
-  from {
-    -webkit-transform: rotate(360deg);
-    transform: rotate(360deg);
+@-webkit-keyframes trackMove {
+  0% {
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
   }
-  to {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
+  100% {
+    -webkit-transform: translateX(100%);
+    transform: translateX(100%);
   }
 }
 
-@keyframes spinRight {
-  from {
-    -webkit-transform: rotate(360deg);
-    transform: rotate(360deg);
+@keyframes trackMove {
+  0% {
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
   }
-  to {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
+  100% {
+    -webkit-transform: translateX(100%);
+    transform: translateX(100%);
+  }
+}
+
+@-webkit-keyframes tractorDrive {
+  0% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+  50% {
+    -webkit-transform: translateX(120px);
+    transform: translateX(120px);
+  }
+  100% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+}
+
+@keyframes tractorDrive {
+  0% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+  50% {
+    -webkit-transform: translateX(120px);
+    transform: translateX(120px);
+  }
+  100% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+}
+
+@-webkit-keyframes tractorBounce {
+  0%, 100% {
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+  50% {
+    -webkit-transform: translateY(-4px);
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes tractorBounce {
+  0%, 100% {
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+  50% {
+    -webkit-transform: translateY(-4px);
+    transform: translateY(-4px);
   }
 }
 
