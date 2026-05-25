@@ -52,6 +52,7 @@ class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['market_location'].required = True
+        self.fields['stock'].label = 'Stock (kg)'
         for name, field in self.fields.items():
             if name != 'image':
                 field.widget.attrs.update({

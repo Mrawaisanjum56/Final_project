@@ -36,7 +36,10 @@
     <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
     <div class="d-flex align-items-center">
         <div class="flex-grow-1">{{ form.image }}</div>
-        <button type="button" class="btn btn-outline-primary rounded-pill ml-2 js-run-model">Run Model</button>
+        <button type="button" class="btn btn-outline-primary rounded-pill ml-2 js-run-model">
+            <span class="spinner-border spinner-border-sm mr-2 d-none js-run-model-spinner" role="status" aria-hidden="true"></span>
+            <span class="js-run-model-label">Run Model</span>
+        </button>
     </div>
     {% for error in form.image.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
     <small class="form-text text-muted">Run model to auto-fill quality and market price before submit.</small>
@@ -61,7 +64,7 @@
     >
 </div>
 <div class="form-group">
-    <label>Auto Price (Database)</label>
+    <label>Auto Price (Per Kg)</label>
     <input
         type="text"
         class="form-control rounded-pill border-0 shadow-sm px-4 bg-light js-auto-price"
@@ -105,6 +108,8 @@
             const qualityGrade = form.querySelector('.js-quality-grade');
             const qualityConfidence = form.querySelector('.js-quality-confidence');
             const autoPrice = form.querySelector('.js-auto-price');
+            const spinner = button.querySelector('.js-run-model-spinner');
+            const buttonLabel = button.querySelector('.js-run-model-label');
             const imageField = form.querySelector('[name="image"]');
             const categoryField = form.querySelector('[name="category"]');
             const varietyField = form.querySelector('[name="variety"]');
@@ -114,7 +119,8 @@
                 errorBox.textContent = '';
             }
             button.disabled = true;
-            button.textContent = 'Running...';
+            if (spinner) spinner.classList.remove('d-none');
+            if (buttonLabel) buttonLabel.textContent = 'Running...';
 
             const payload = new FormData();
             payload.append('category', categoryField ? categoryField.value : '');
@@ -148,7 +154,8 @@
                 }
             } finally {
                 button.disabled = false;
-                button.textContent = 'Run Model';
+                if (spinner) spinner.classList.add('d-none');
+                if (buttonLabel) buttonLabel.textContent = 'Run Model';
             }
         }
 

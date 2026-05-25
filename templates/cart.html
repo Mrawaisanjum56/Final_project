@@ -40,8 +40,8 @@
                                 <th class="product-remove"></th>
                                 <th class="product-image">Product Image</th>
                                 <th class="product-name">Name</th>
-                                <th class="product-price">Price</th>
-                                <th class="product-quantity">Quantity</th>
+                                <th class="product-price">Price / kg</th>
+                                <th class="product-quantity">Quantity (kg)</th>
                                 <th class="product-total">Total</th>
                             </tr>
                         </thead>
@@ -67,7 +67,7 @@
                                             <button type="submit" class="btn btn-sm" style="background: #F28123; color: #fff; margin-left: 5px;">Update</button>
                                         </form>
                                         <!-- Product ki actual quantity (stock) ka box -->
-                                        <small class="d-block mt-1">In Stock: {{ item.product.stock }}</small>
+                                        <small class="d-block mt-1">In Stock: {{ item.product.stock }} kg</small>
                                     </td>
                                     <td class="product-total">PKR {{ item.get_total }}</td>
                                 </tr>

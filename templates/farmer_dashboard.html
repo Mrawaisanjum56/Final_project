@@ -183,10 +183,10 @@
                                 {% endif %}
                                 {{ product.name }}
                             </td>
-                            <td>PKR {{ product.price }}</td>
+                            <td>PKR {{ product.price }} / kg</td>
                             <td>
                                 <span class="badge {% if product.stock < 10 %}badge-danger animate-pulse-red{% else %}badge-light text-dark{% endif %} p-2 px-3 rounded-pill shadow-sm">
-                                    {{ product.stock }} in stock
+                                    {{ product.stock }} kg in stock
                                 </span>
                             </td>
                             <td><span class="badge badge-pill badge-outline-dark border p-2">{{ product.category.name }}</span></td>

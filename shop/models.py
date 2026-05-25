@@ -62,6 +62,19 @@ class MarketPrice(models.Model):
         ]
         ordering = ['-price_date', 'commodity_type', 'variety', 'market_location']
 
+    @property
+    def uses_100kg_unit(self):
+        normalized_unit = (self.unit or '').lower().replace(' ', '')
+        if normalized_unit in {'100kg', 'quintal'}:
+            return True
+        return not normalized_unit and self.source.lower() == 'amis.pk'
+
+    @property
+    def price_per_kg(self):
+        if self.uses_100kg_unit:
+            return (self.price / Decimal('100')).quantize(Decimal('0.01'))
+        return self.price.quantize(Decimal('0.01'))
+
     def __str__(self):
         return f"{self.price_date} | {self.commodity_type} | {self.market_location} | {self.price}"
 
@@ -127,7 +140,7 @@ class Product(models.Model):
                 )
             return None
 
-        self.price = market_price.price
+        self.price = market_price.price_per_kg
         self.price_source = market_price
         self.priced_at = timezone.now()
         return market_price

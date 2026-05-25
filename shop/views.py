@@ -17,6 +17,19 @@ from .ml.quality import assess_wheat_quality
 
 ALLOWED_QUALITY_GRADES = {'A', 'B', 'C'}
 
+def _get_selling_categories():
+    return Category.objects.filter(products__isnull=False).distinct().order_by('name')
+
+def _filter_products(products, category_slug='', quality_grade=''):
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+    if quality_grade:
+        products = products.filter(
+            category__slug='wheat',
+            quality_grade=quality_grade.upper(),
+        )
+    return products
+
 def send_order_email_async(subject, message, email_from, recipient_list):
     """Helper function to send email in a separate thread."""
     try:
@@ -25,8 +38,20 @@ def send_order_email_async(subject, message, email_from, recipient_list):
         print(f"Async SMTP Error: {e}")
 
 def home(request):
-    products = Product.objects.select_related('farmer').all()[:8]
-    return render(request, 'index.html', {'products': products})
+    products = Product.objects.select_related('farmer', 'category').all()
+    selected_category = (request.GET.get('category') or '').strip()
+    selected_grade = (request.GET.get('grade') or '').strip().upper()
+    if selected_grade not in ALLOWED_QUALITY_GRADES:
+        selected_grade = ''
+
+    products = _filter_products(products, selected_category, selected_grade)[:8]
+    categories = _get_selling_categories()
+    return render(request, 'index.html', {
+        'products': products,
+        'categories': categories,
+        'selected_category': selected_category,
+        'selected_grade': selected_grade,
+    })
 
 def shop(request):
     products = Product.objects.select_related('farmer', 'category').all()
@@ -234,7 +259,7 @@ def add_to_cart(request, product_id):
             quantity = 1
 
     if quantity > product.stock:
-        messages.warning(request, f'Only {product.stock} items are available for "{product.name}".')
+        messages.warning(request, f'Only {product.stock} kg are available for "{product.name}".')
         return redirect('single-product', pk=product.id)
 
     if request.user.is_authenticated:
@@ -254,7 +279,7 @@ def add_to_cart(request, product_id):
             else:
                 messages.success(request, f'"{product.name}" quantity updated in your cart.')
         else:
-            messages.warning(request, f'Cannot add more "{product.name}". Stock limit reached.')
+            messages.warning(request, f'Cannot add more "{product.name}". Stock limit reached in kg.')
     else:
         cart = request.session.get('cart', {})
         p_id = str(product_id)
@@ -266,7 +291,7 @@ def add_to_cart(request, product_id):
             request.session.modified = True
             messages.success(request, f'"{product.name}" has been added to your cart.')
         else:
-            messages.warning(request, f'Stock limit for "{product.name}" reached.')
+            messages.warning(request, f'Stock limit for "{product.name}" reached in kg.')
 
     return redirect('cart')
 
@@ -474,7 +499,7 @@ def update_cart(request, item_id):
                         order_item.save()
                         messages.success(request, f'Quantity for "{order_item.product.name}" has been updated.')
                     else:
-                        messages.warning(request, f'Only {order_item.product.stock} items are available for "{order_item.product.name}".')
+                        messages.warning(request, f'Only {order_item.product.stock} kg are available for "{order_item.product.name}".')
                 else:
                     product_name = order_item.product.name
                     order_item.delete()
@@ -494,7 +519,7 @@ def update_cart(request, item_id):
                         request.session['cart'] = cart
                         messages.success(request, f'Quantity for "{product.name}" has been updated.')
                     else:
-                        messages.warning(request, f'Only {product.stock} items are available for "{product.name}".')
+                        messages.warning(request, f'Only {product.stock} kg are available for "{product.name}".')
                 else:
                     if p_id in cart:
                         del cart[p_id]

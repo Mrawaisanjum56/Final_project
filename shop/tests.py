@@ -44,9 +44,12 @@ class ProductMarketPricingTests(TestCase):
         matched = product.apply_market_price(strict=True)
 
         self.assertEqual(matched.pk, self.market_price.pk)
-        self.assertEqual(product.price, Decimal('2750.00'))
+        self.assertEqual(product.price, Decimal('27.50'))
         self.assertEqual(product.price_source, self.market_price)
         self.assertIsNotNone(product.priced_at)
+
+    def test_market_price_exposes_per_kg_price_for_amis_values(self):
+        self.assertEqual(self.market_price.price_per_kg, Decimal('27.50'))
 
     def test_apply_market_price_raises_when_missing(self):
         product = Product(
@@ -83,7 +86,7 @@ class ProductMarketPricingTests(TestCase):
         product.save()
         product.refresh_from_db()
 
-        self.assertEqual(product.price, Decimal('2337.50'))
+        self.assertEqual(product.price, Decimal('23.38'))
         self.assertEqual(product.quality_grade, 'B')
         self.assertEqual(product.quality_confidence, Decimal('65.00'))
 
@@ -113,7 +116,7 @@ class ProductMarketPricingTests(TestCase):
         product.save()
         product.refresh_from_db()
 
-        self.assertEqual(product.price, Decimal('2750.00'))
+        self.assertEqual(product.price, Decimal('27.50'))
         self.assertEqual(product.price_source_id, original_source_id)
         self.assertEqual(product.priced_at, original_priced_at)
 
@@ -136,7 +139,7 @@ class ProductMarketPricingTests(TestCase):
         payload = response.json()
         self.assertEqual(payload['quality_grade'], 'A')
         self.assertEqual(payload['quality_confidence'], 96.5)
-        self.assertEqual(payload['price'], '2750.00')
+        self.assertEqual(payload['price'], '27.50')
 
     @patch('shop.views.assess_wheat_quality', return_value=('B', 88.2))
     def test_analyze_product_listing_applies_grade_multiplier_for_wheat(self, _mock_quality):
@@ -157,7 +160,7 @@ class ProductMarketPricingTests(TestCase):
         payload = response.json()
         self.assertEqual(payload['quality_grade'], 'B')
         self.assertEqual(payload['quality_confidence'], 88.2)
-        self.assertEqual(payload['price'], '2337.50')
+        self.assertEqual(payload['price'], '23.38')
 
     def test_analyze_product_listing_requires_image_for_wheat(self):
         self.client.login(username='seller1', password='pass12345')
@@ -213,3 +216,65 @@ class ScraperFallbackTests(TestCase):
             market_location='Lahore',
         )
         self.assertEqual(today_wheat.price, Decimal('2800.00'))
+
+
+class HomePageCategoryFilterTests(TestCase):
+    def setUp(self):
+        self.wheat = Category.objects.create(name='Wheat')
+        self.rice = Category.objects.create(name='Rice')
+        seller = CustomUser.objects.create_user(
+            username='seller-home',
+            password='pass12345',
+            user_type='seller',
+        )
+        for product in [
+            Product(
+                farmer=seller,
+                name='Grade A Wheat',
+                category=self.wheat,
+                variety='A1',
+                market_location='Lahore',
+                price=Decimal('30.00'),
+                description='desc',
+                stock=10,
+                quality_grade='A',
+            ),
+            Product(
+                farmer=seller,
+                name='Grade B Wheat',
+                category=self.wheat,
+                variety='A1',
+                market_location='Lahore',
+                price=Decimal('25.00'),
+                description='desc',
+                stock=8,
+                quality_grade='B',
+            ),
+            Product(
+                farmer=seller,
+                name='Premium Rice',
+                category=self.rice,
+                variety='Super',
+                market_location='Lahore',
+                price=Decimal('18.00'),
+                description='desc',
+                stock=12,
+            ),
+        ]:
+            product.save(enforce_market_rules=False)
+
+    def test_home_filters_products_by_category(self):
+        response = self.client.get(reverse('home'), {'category': 'rice'})
+
+        self.assertEqual(response.status_code, 200)
+        products = list(response.context['products'])
+        self.assertEqual(len(products), 1)
+        self.assertEqual(products[0].name, 'Premium Rice')
+
+    def test_home_filters_wheat_by_grade(self):
+        response = self.client.get(reverse('home'), {'category': 'wheat', 'grade': 'B'})
+
+        self.assertEqual(response.status_code, 200)
+        products = list(response.context['products'])
+        self.assertEqual(len(products), 1)
+        self.assertEqual(products[0].name, 'Grade B Wheat')
