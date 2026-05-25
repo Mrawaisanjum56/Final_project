@@ -272,7 +272,11 @@ class HomePageCategoryFilterTests(TestCase):
         response = self.client.get(reverse('home'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'class="product-grade-tag"', count=2)
+        expected_grade_tag_count = Product.objects.filter(
+            category=self.wheat,
+            quality_grade__isnull=False,
+        ).count()
+        self.assertContains(response, 'class="product-grade-tag"', count=expected_grade_tag_count)
 
     def test_home_filters_products_by_category(self):
         response = self.client.get(reverse('home'), {'category': 'rice'})
