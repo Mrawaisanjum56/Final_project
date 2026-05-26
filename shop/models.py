@@ -80,8 +80,8 @@ class MarketPrice(models.Model):
 class Product(models.Model):
     QUALITY_PRICE_MULTIPLIERS = {
         'A': Decimal('1.00'),
-        'B': Decimal('0.85'),
-        'C': Decimal('0.65'),
+        'B': Decimal('0.90'),
+        'C': Decimal('0.80'),
     }
 
     farmer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products', null=True, blank=True)

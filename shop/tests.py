@@ -82,7 +82,7 @@ class ProductMarketPricingTests(TestCase):
         product.save()
         product.refresh_from_db()
 
-        self.assertEqual(product.price, Decimal('23.38'))
+        self.assertEqual(product.price, Decimal('24.75'))
         self.assertEqual(product.quality_grade, 'B')
         self.assertEqual(product.quality_confidence, Decimal('65.00'))
 
@@ -152,7 +152,7 @@ class ProductMarketPricingTests(TestCase):
         payload = response.json()
         self.assertEqual(payload['quality_grade'], 'B')
         self.assertEqual(payload['quality_confidence'], 88.2)
-        self.assertEqual(payload['price'], '23.38')
+        self.assertEqual(payload['price'], '24.75')
 
     def test_analyze_product_listing_requires_image_for_wheat(self):
         self.client.login(username='seller1', password='pass12345')
@@ -205,6 +205,39 @@ class ScraperFallbackTests(TestCase):
             market_location='Lahore',
         )
         self.assertEqual(today_wheat.price, Decimal('2800.00'))
+
+    @patch(
+        'shop.management.commands.scrape_amis_prices.COMMODITY_PAGES',
+        {'Rice': {'commodity_id': 3, 'search_type': 0}},
+    )
+    @patch('shop.management.commands.scrape_amis_prices.requests.Session.get')
+    def test_scraper_saves_markup_price_for_non_wheat(self, mock_get):
+        class FakeResponse:
+            text = (
+                '<html><body><table>'
+                '<tr><td>Lahore</td><td>1900</td><td>2100</td><td>2000</td><td>100kg</td></tr>'
+                '</table></body></html>'
+            )
+
+            @staticmethod
+            def raise_for_status():
+                return None
+
+        mock_get.return_value = FakeResponse()
+        target_date = timezone.localdate()
+
+        call_command(
+            'scrape_amis_prices',
+            date=target_date.strftime('%Y-%m-%d'),
+            market='Lahore',
+        )
+
+        rice_price = MarketPrice.objects.get(
+            price_date=target_date,
+            commodity_type='Rice',
+            market_location='Lahore',
+        )
+        self.assertEqual(rice_price.price, Decimal('2200.00'))
 
 
 class HomePageCategoryFilterTests(TestCase):
