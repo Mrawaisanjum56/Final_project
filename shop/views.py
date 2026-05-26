@@ -126,9 +126,21 @@ def single_news(request):
     return render(request, 'single-news.html')
 
 def index_2(request):
-    products = list(Product.objects.all()[:8])
+    products = Product.objects.select_related('farmer', 'category').all()
+    selected_category = (request.GET.get('category') or '').strip()
+    selected_grade = (request.GET.get('grade') or '').strip().upper()
+    if selected_grade not in ALLOWED_QUALITY_GRADES:
+        selected_grade = ''
+
+    products = list(_filter_products(products, selected_category, selected_grade))
     _refresh_listed_product_prices(products)
-    return render(request, 'index_2.html', {'products': products})
+    categories = _get_selling_categories()
+    return render(request, 'index_2.html', {
+        'products': products,
+        'categories': categories,
+        'selected_category': selected_category,
+        'selected_grade': selected_grade,
+    })
 
 def error_404(request):
     return render(request, '404.html')

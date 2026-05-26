@@ -66,6 +66,28 @@
 	</div>
 	<!-- end home page slider -->
 
+	<div class="home-category-bar">
+		<div class="container">
+			<ul class="home-category-nav">
+				<li class="home-category-item {% if not selected_category %}active{% endif %}">
+					<a href="{% url 'index-2' %}" class="home-category-link">All Products</a>
+				</li>
+				{% for category in categories %}
+				<li class="home-category-item {% if selected_category == category.slug %}active{% endif %} {% if category.slug == 'wheat' %}has-submenu{% endif %}">
+					<a href="{% url 'index-2' %}?category={{ category.slug }}" class="home-category-link">{{ category.name }}</a>
+					{% if category.slug == 'wheat' %}
+					<ul class="home-category-submenu">
+						<li><a href="{% url 'index-2' %}?category=wheat&grade=A" class="{% if selected_category == 'wheat' and selected_grade == 'A' %}active{% endif %}">Grade A</a></li>
+						<li><a href="{% url 'index-2' %}?category=wheat&grade=B" class="{% if selected_category == 'wheat' and selected_grade == 'B' %}active{% endif %}">Grade B</a></li>
+						<li><a href="{% url 'index-2' %}?category=wheat&grade=C" class="{% if selected_category == 'wheat' and selected_grade == 'C' %}active{% endif %}">Grade C</a></li>
+					</ul>
+					{% endif %}
+				</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+
 	<!-- features list section -->
 	<div class="list-section pt-80 pb-80">
 		<div class="container">
@@ -117,28 +139,45 @@
 				<div class="col-lg-8 offset-lg-2 text-center">
 					<div class="section-title">	
 						<h3><span class="orange-text">Our</span> Products</h3>
-						<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid, fuga quas itaque eveniet beatae optio.</p>
+						{% if selected_category %}
+						<p>
+							Showing
+							{% if selected_category == 'wheat' and selected_grade %}
+								Wheat Grade {{ selected_grade }}
+							{% else %}
+								{{ selected_category|title }}
+							{% endif %}
+							products.
+						</p>
+						{% endif %}
 					</div>
 				</div>
 			</div>
 
 			<div class="row">
-				{% for product in products|slice:":3" %}
+				{% for product in products %}
 				<div class="col-lg-4 col-md-6 text-center">
 					<div class="single-product-item">
 						<div class="product-image">
 							<a href="{% url 'single-product' product.pk %}">
 								{% if product.image %}
-								<img src="{{ product.image.url }}" alt="">
+								<img src="{{ product.image.url }}" alt="{{ product.name }}" class="home-product-thumb">
 								{% else %}
-								<img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt="">
+								<img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt="" class="home-product-thumb">
 								{% endif %}
 							</a>
+							{% if product.is_wheat_commodity and product.quality_grade %}
+							<span class="product-grade-tag">Grade {{ product.quality_grade }}</span>
+							{% endif %}
 						</div>
 						<h3>{{ product.name }}</h3>
-						<p class="product-price"><span>Per Kg</span> PKR {{ product.price }}</p>
-						<a href="{% url 'cart' %}" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
+						<p class="product-price"><span>Per kg · Stock: {{ product.stock }} kg</span> PKR {{ product.price }}</p>
+						<a href="{% url 'add_to_cart' product.id %}" class="cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</a>
 					</div>
+				</div>
+				{% empty %}
+				<div class="col-12 text-center">
+					<p>No products found for this category.</p>
 				</div>
 				{% endfor %}
 			</div>
