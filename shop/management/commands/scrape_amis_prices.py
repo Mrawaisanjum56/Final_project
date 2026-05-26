@@ -15,6 +15,7 @@ from shop.models import MarketPrice
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36"
 WHEAT_COMMODITY_NAME = "wheat"
+FQP_MARKUP_MULTIPLIER = Decimal("1.10")
 
 # Your known working commodity IDs
 COMMODITY_PAGES = {
@@ -140,7 +141,7 @@ class Command(BaseCommand):
 
                 price = _extract_fqp_from_row_text(row_text)
                 if price is not None:
-                    picked_price = price
+                    picked_price = (price * FQP_MARKUP_MULTIPLIER).quantize(Decimal("0.01"))
                     picked_unit = _detect_unit(row_text)
                     break
 
