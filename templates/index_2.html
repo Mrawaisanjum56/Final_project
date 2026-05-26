@@ -161,9 +161,9 @@
 						<div class="product-image">
 							<a href="{% url 'single-product' product.pk %}">
 								{% if product.image %}
-								<img src="{{ product.image.url }}" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
+								<img src="{{ product.image.url }}" alt="{{ product.name }}" class="home-product-thumb">
 								{% else %}
-								<img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt="">
+								<img src="{% static 'assets/img/products/product-img-1.jpg' %}" alt="" class="home-product-thumb">
 								{% endif %}
 							</a>
 							{% if product.is_wheat_commodity and product.quality_grade %}

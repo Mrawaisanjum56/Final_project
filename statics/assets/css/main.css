@@ -2545,10 +2545,15 @@ ul.social-link-team li a {
   margin-bottom: 20px;
 }
 
+.home-product-thumb {
+  height: 250px;
+  object-fit: cover;
+}
+
 .product-grade-tag {
   position: absolute;
-  top: 38px;
-  right: 38px;
+  top: 40px;
+  right: 40px;
   background: rgba(242, 129, 35, 0.18);
   border: 1px solid rgba(242, 129, 35, 0.55);
   -webkit-backdrop-filter: blur(5px);
